@@ -1,31 +1,29 @@
+// Package cmd wires the command line interface. Running the binary without a
+// subcommand launches the GUI.
 package cmd
 
 import (
 	"log"
 
 	"github.com/spf13/cobra"
+
+	"fmnewgenfaces/gui"
+	"fmnewgenfaces/internal/brand"
 )
 
-func runDefault(cmd *cobra.Command, args []string) {
-	// Launch GUI
-	runGUI(cmd, args)
-}
-
 var rootCmd = &cobra.Command{
-	Use:   "jaqen-newgen-tool",
-	Short: "Jaqen NewGen Tool - Football Manager Face Manager",
-	Long:  `Jaqen NewGen Tool creates and manages image file mappings to face profiles in Football Manager.`,
-	Run:   runDefault,
+	Use:   brand.BinaryName,
+	Short: brand.AppName + " – faces for Football Manager newgens",
+	Run:   func(cmd *cobra.Command, args []string) { gui.Run() },
 }
 
+// Execute runs the root command.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		log.Fatalln(err)
 	}
 }
 
 func init() {
-	// Add GUI command
 	rootCmd.AddCommand(guiCmd)
 }
