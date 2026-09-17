@@ -239,3 +239,17 @@ func TestRestoreRefusesWithoutFlags(t *testing.T) {
 		t.Fatal("expected an error when none of --list/--to/--latest is given")
 	}
 }
+
+func TestFlagsOverlayProfile(t *testing.T) {
+	pack, rtfPath, configXML := setupEnv(t)
+	runOK(t, []string{"profiles", "create", "Overlay"})
+	// The profile has no paths yet, so check alone must fail...
+	if _, err := run(t, []string{"check", "--profile", "overlay"}); err == nil {
+		t.Fatal("check on an empty profile should report problems")
+	}
+	// ...but individual flags fill in exactly the missing fields.
+	out := runOK(t, []string{"check", "--profile", "overlay", "--pack", pack, "--rtf", rtfPath, "--config", configXML, "--fm", "2024"})
+	if strings.Contains(out, "problem") {
+		t.Fatalf("overlayed check should be clean, got: %q", out)
+	}
+}

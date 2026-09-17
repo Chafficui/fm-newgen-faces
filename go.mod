@@ -7,6 +7,7 @@ toolchain go1.23.2
 require (
 	fyne.io/fyne/v2 v2.6.3
 	github.com/deckarep/golang-set/v2 v2.6.0
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/spf13/cobra v1.8.0
 	github.com/sqweek/dialog v0.0.0-20220809060634-e981b270ebbf
@@ -18,7 +19,6 @@ require (
 	github.com/TheTitanrain/w32 v0.0.0-20180517000239-4f5cfb03fabf // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fredbi/uri v1.1.0 // indirect
-	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fyne-io/gl-js v0.2.0 // indirect
 	github.com/fyne-io/glfw-js v0.3.0 // indirect
 	github.com/fyne-io/image v0.1.1 // indirect

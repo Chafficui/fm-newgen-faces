@@ -85,23 +85,25 @@ type settingsFlags struct {
 // addSettingsFlags registers --profile, --pack, --rtf, --config and --fm on cmd.
 func addSettingsFlags(cmd *cobra.Command, f *settingsFlags) {
 	cmd.Flags().StringVar(&f.profileName, "profile", "", "profile name or slug (default: last used, or the only profile)")
-	cmd.Flags().StringVar(&f.pack, "pack", "", "face pack folder (used instead of --profile)")
-	cmd.Flags().StringVar(&f.rtf, "rtf", "", "newgen export (RTF) file (used instead of --profile)")
-	cmd.Flags().StringVar(&f.config, "config", "", "config.xml path (used instead of --profile)")
-	cmd.Flags().StringVar(&f.fm, "fm", "", "Football Manager version, e.g. 2024 (used instead of --profile)")
+	cmd.Flags().StringVar(&f.pack, "pack", "", "face pack folder (overrides the profile value)")
+	cmd.Flags().StringVar(&f.rtf, "rtf", "", "newgen export (RTF) file (overrides the profile value)")
+	cmd.Flags().StringVar(&f.config, "config", "", "config.xml path (overrides the profile value)")
+	cmd.Flags().StringVar(&f.fm, "fm", "", "Football Manager version, e.g. 2024 (overrides the profile value)")
 }
 
-// explicit reports whether any of the direct-path flags were given, in which
-// case they take over from profile resolution entirely.
+// explicit reports whether any of the direct-path flags were given. Without
+// --profile they describe a stand-alone run; with --profile they override
+// individual fields of that profile.
 func (f settingsFlags) explicit() bool {
 	return f.pack != "" || f.rtf != "" || f.config != "" || f.fm != ""
 }
 
-// resolveSettings resolves profile.Settings either from the explicit flags or
-// from a profile (see settingsFlags.explicit). profile is nil when the
-// explicit flags were used.
+// resolveSettings resolves profile.Settings from a profile, from explicit
+// flags, or from a profile with individual flags overriding it. The returned
+// profile is nil for a stand-alone run.
 func resolveSettings(store *profile.Store, f settingsFlags) (profile.Settings, *profile.Profile, error) {
-	if f.explicit() {
+	// Explicit paths without a profile name describe a stand-alone run.
+	if f.profileName == "" && f.explicit() {
 		s := profile.DefaultSettings()
 		s.PackDir = f.pack
 		s.RTFPath = f.rtf
@@ -116,7 +118,21 @@ func resolveSettings(store *profile.Store, f settingsFlags) (profile.Settings, *
 	if err != nil {
 		return profile.Settings{}, nil, err
 	}
-	return p.Settings, p, nil
+	// Individual flags override the corresponding profile field only.
+	s := p.Settings
+	if f.pack != "" {
+		s.PackDir = f.pack
+	}
+	if f.rtf != "" {
+		s.RTFPath = f.rtf
+	}
+	if f.config != "" {
+		s.ConfigXML = f.config
+	}
+	if f.fm != "" {
+		s.FMVersion = f.fm
+	}
+	return s, p, nil
 }
 
 // writeTable prints an aligned table (tab-separated headers/rows rendered
