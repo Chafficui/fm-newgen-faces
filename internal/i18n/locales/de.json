@@ -1,0 +1,17 @@
+{
+  "app.name": "FM NewGen Faces",
+  "common.browse": "Durchsuchen",
+  "common.cancel": "Abbrechen",
+  "common.close": "Schließen",
+  "common.delete": "Löschen",
+  "common.error": "Fehler",
+  "common.no": "Nein",
+  "common.ok": "OK",
+  "common.open_folder": "Ordner öffnen",
+  "common.save": "Speichern",
+  "common.warning": "Warnung",
+  "common.yes": "Ja",
+  "greeting": "Hallo, %s!",
+  "profile.count.one": "%d Profil",
+  "profile.count.other": "%d Profile"
+}
