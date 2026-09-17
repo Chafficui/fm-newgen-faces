@@ -1,32 +1,33 @@
-# Jaqen NewGen Tool - Simple Build System
+# FM NewGen Faces – build system
+APP     := fm-newgen-faces
+MODULE  := fmnewgenfaces
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo dev)
+LDFLAGS := -s -w -X $(MODULE)/internal/brand.Version=$(VERSION)
 
-APP_NAME = jaqen-newgen-tool
-VERSION = 1.0.0
+.PHONY: build run test vet fmt lint check clean icon help
 
-.PHONY: build dev clean help
+build: ## Build for the current platform
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $(APP)$(EXT) .
 
-# Build the application
-build:
-	go build -o $(APP_NAME) .
+run: build ## Build and launch the GUI
+	./$(APP)$(EXT)
 
-# Build and run for development
-dev:
-	make build && ./$(APP_NAME)
+test: ## Run all tests
+	go test ./... -count=1
 
-# Clean build artifacts
+vet: ## go vet
+	go vet ./...
+
+fmt: ## gofmt check
+	@test -z "$$(gofmt -l . | tee /dev/stderr)" || (echo "run gofmt -w ." && exit 1)
+
+check: fmt vet test ## Everything CI runs
+
+icon: ## Regenerate assets/icon.png
+	go run ./assets/gen
+
 clean:
-	rm -f $(APP_NAME)
+	rm -f $(APP) $(APP).exe
 
-# Show help
 help:
-	@echo "Jaqen NewGen Tool - Build System"
-	@echo ""
-	@echo "Available targets:"
-	@echo "  build    - Build the application"
-	@echo "  dev      - Build and run for development"
-	@echo "  clean    - Clean build artifacts"
-	@echo "  help     - Show this help message"
-	@echo ""
-	@echo "Examples:"
-	@echo "  make build    # Build the application"
-	@echo "  make dev      # Build and run locally"
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  %-10s %s\n", $$1, $$2}'

@@ -1,29 +1,65 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
-name: Go
+# Builds native binaries on each OS (Fyne needs cgo, so no cross-compiling)
+# and attaches them to the GitHub release for the pushed tag (v1.2.3).
+name: Release
 
 on:
   push:
-    branches: ["release"]
+    tags: ["v*"]
+
+permissions:
+  contents: write
 
 jobs:
-  goreleaser:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            archive: tar.gz
+          - os: windows-latest
+            goos: windows
+            archive: zip
+          - os: macos-latest
+            goos: darwin
+            archive: tar.gz
+    runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Unshallow repo
-        run: git fetch --prune --unshallow
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
-      - name: Run goreleaser
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          distribution: goreleaser
-          version: v1.17.2
-          args: release --clean
+          go-version-file: go.mod
+      - name: Install Linux build dependencies
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libgtk-3-dev
+      - name: Version from tag
+        id: v
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Build
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{secrets.JAQEN_GITHUB_API_TOKEN}}
+          CGO_ENABLED: "1"
+        run: |
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
+          go build -trimpath -ldflags "-s -w -X fmnewgenfaces/internal/brand.Version=${{ steps.v.outputs.version }}" -o fm-newgen-faces$EXT .
+      - name: Package
+        shell: bash
+        run: |
+          NAME=fm-newgen-faces-${{ matrix.goos }}-${{ steps.v.outputs.version }}
+          mkdir -p dist/$NAME
+          cp README.md LICENSE dist/$NAME/
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cp fm-newgen-faces.exe dist/$NAME/
+            (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null)
+          else
+            cp fm-newgen-faces dist/$NAME/
+            (cd dist && tar -czf $NAME.tar.gz $NAME)
+          fi
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.${{ matrix.archive }}
+          generate_release_notes: true

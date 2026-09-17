@@ -1,171 +1,106 @@
-<div align="center"><pre>
-        _____   ____    _______   __
-       / /   | / __ \  / ____/ | / /
-  __  / / /| |/ / / / / __/ /  |/ /
- / /_/ / ___ / /_/ / / /___/ /|  /  
- \____/_/  |_\___\_\/_____/_/ |_/
-
-Jaqen NewGen Tool
-</pre></div>
-
 <div align="center">
 
-**Jaqen NewGen Tool** - Football Manager Face Manager
+# FM NewGen Faces
 
-A modern GUI application for creating and managing image file mappings to face profiles in Football Manager.
+**Give every newgen in your Football Manager save a real face – in one click.**
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)](https://github.com/chafficui/jaqen-newgen-tool/releases)
-[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat&logo=go)](https://golang.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/chafficui/jaqen-newgen-tool)
+Free, open source, cross-platform (Windows · macOS · Linux). Works with any newgen face pack that uses the standard 14 ethnic folders (NewGAN-style packs).
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/chafficui/jaqen-newgen-tool?label=download)](https://github.com/chafficui/jaqen-newgen-tool/releases/latest)
+[![CI](https://github.com/chafficui/jaqen-newgen-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/chafficui/jaqen-newgen-tool/actions/workflows/ci.yml)
 
-## 📺 Watch Tutorial Video
-
-[![▶️ Jaqen NewGen Tool Tutorial Video](https://img.youtube.com/vi/aHnrpfH--ic/maxresdefault.jpg)](https://www.youtube.com/watch?v=aHnrpfH--ic)
-
-*Click the thumbnail above to watch the complete setup tutorial*
+[Download](https://github.com/chafficui/jaqen-newgen-tool/releases/latest) · [Tutorial video](https://youtu.be/aHnrpfH--ic) · [Report a problem](https://github.com/chafficui/jaqen-newgen-tool/issues)
 
 </div>
 
-## About
+## What it does
 
-Jaqen NewGen Tool is a modern, cross-platform GUI application for managing Football Manager regen face mappings. It automatically assigns face images to newgen players based on their nationality and ethnic groups.
+Football Manager generates "newgens" (regens) with blank faces. FM NewGen Faces reads the list of newgens from your save, picks a matching portrait for each one from your face pack based on nationality and ethnicity, and writes the `config.xml` that FM uses to show the pictures. Run it once per season (or whenever you like) and every new youth intake gets faces too.
 
-### Key Features
+**Version 2** is a rewrite of the tool formerly known as *Jaqen NewGen Tool*, with a guided setup, a dry-run preview, backups with undo, a face review table, a headless CLI and a long list of fixes. Your old profiles are migrated automatically on first start.
 
-- **🚀 One-Click Setup** - Auto-distributes views/filters to all FM installations on startup
-- **🔄 Auto-Detection** - Automatically finds FM installations and paths
-- **📁 File Management** - Auto-generates config.xml and detects RTF files
-- **🌍 Cross-Platform** - Works on Windows, macOS, and Linux
-- **⚙️ Smart Mapping** - Maps nations to ethnic groups with override support
-- **📊 Visual Progress** - Real-time feedback during processing
+## Quick start
 
-## Quick Start
+1. **Install a face pack.** Extract it anywhere under your FM graphics folder, e.g.
+   `Documents/Sports Interactive/Football Manager 2024/graphics/newgen-faces/`.
+   The folder must contain the 14 ethnic subfolders (`African`, `Asian`, `Caucasian`, …).
+2. **Start FM NewGen Faces.** It finds your FM installations, installs the required view and filter into FM, and creates a profile per installation. The setup checklist tells you exactly what is still missing.
+3. **Export the newgen list from FM** (once per run):
+   Scouting → Players in Range → import the view **SCRIPT FACES player search** → apply the filter **is newgen search filter** → select all (Ctrl+A) → print to text file (Ctrl+P) → save as `newgen.rtf` in your face pack folder. The app notices the new file by itself.
+4. **Click Preview**, check the numbers, then **Assign faces**. A backup of the previous `config.xml` is kept; *Undo* restores it.
+5. **In FM:** Preferences → Interface → *Clear Cache* and *Reload Skin* (or restart FM). Done.
 
-### 1. Download and Run
+## Features
 
-1. **Download** the latest release for your platform from the [Releases page](https://github.com/chafficui/jaqen-newgen-tool/releases)
-2. **Extract** the downloaded file to a folder of your choice
-3. **Run** the application:
-   - **Windows**: Double-click `jaqen-newgen-tool.exe`
-   - **macOS**: Double-click `jaqen-newgen-tool` (you may need to allow it in Security & Privacy)
-   - **Linux**: Run `./jaqen-newgen-tool` in terminal
+- **Setup checklist** – face pack, config.xml, RTF export and FM version are checked live, each with a fix-it action.
+- **Face pack validation** – per-group image counts, missing/empty folders, ignored files and nested folders are shown before you run.
+- **Dry-run preview** – how many players get a new face, how many are preserved, supply vs demand per group.
+- **Unmapped nations resolver** – unknown nation codes are listed with a dropdown; one click saves the override and continues. A single unknown code never blocks the run.
+- **Backups and undo** – every write keeps a timestamped copy of `config.xml`.
+- **Review table** – see every assigned face with a thumbnail, search, and *Reroll* a face you do not like.
+- **Preserve / incremental mode** – existing faces are kept; only new newgens get one. The summary tells you how many.
+- **No duplicates mode** – images already in use are excluded before drawing.
+- **Profiles per FM installation** with auto-selection, validated names and atomic saves.
+- **Drag and drop** the RTF or the face pack folder onto the window; an **RTF watcher** picks up new exports.
+- **Headless CLI** for scripting: `fm-newgen-faces assign --profile "FM 2024"`, `check`, `detect`, `restore`.
+- **First-run wizard**, light/dark theme, English/German UI, keyboard shortcuts, update check, redacted bug reports.
 
-### 2. Setup Football Manager
+## Command line
 
-1. **Install Face Pack:**
-   - Download your preferred face pack
-   - Extract it to your FM graphics folder (e.g., `Documents/Sports Interactive/Football Manager 2024/graphics/`)
-
-2. **Export RTF from Football Manager:**
-   - Go to Scouting → Players in Range
-   - Import "SCRIPT FACES player search" view (auto-distributed by Jaqen)
-   - Apply "is newgen search filter" (auto-distributed by Jaqen)
-   - Select all players (Ctrl+A) → Print to text file (Ctrl+P)
-   - Save as "newgen.rtf" in your face pack folder
-
-3. **Configure Jaqen NewGen Tool:**
-   - Select your face pack directory
-   - Choose settings (Preserve, Allow Duplicates, etc.)
-   - Click "Assign Face Mappings"
-
-4. **Apply in Football Manager:**
-   - Restart Football Manager
-   - Newgen faces will use assigned images
-
-### 3. Watch the Tutorial
-
-📺 **[Complete Setup Video Tutorial](https://youtu.be/aHnrpfH--ic)**
-
-## Installation
-
-### Download Pre-built Binaries
-
-Download the latest release for your platform from the [Releases page](https://github.com/chafficui/jaqen-newgen-tool/releases).
-
-**Supported Platforms:**
-- **Windows**: `jaqen-newgen-tool-windows-x.x.x.zip`
-- **macOS**: `jaqen-newgen-tool-macos-x.x.x.tar.gz` (Intel + Apple Silicon)
-- **Linux**: `jaqen-newgen-tool-linux-x.x.x.tar.gz`
-
-### Build from Source (Advanced Users)
-
-For developers or users who want to build from source:
-
-```bash
-# Clone repository
-git clone https://github.com/chafficui/jaqen-newgen-tool.git
-cd jaqen-newgen-tool
-
-# Build for current platform
-make build
-
-# Build for all platforms
-make build-all
-
-# Run
-./jaqen-newgen-tool
+```
+fm-newgen-faces                 # launches the GUI
+fm-newgen-faces check           # validate the current profile's setup
+fm-newgen-faces assign --profile "FM 2024" [--dry-run] [--no-preserve] [--no-duplicates]
+fm-newgen-faces assign --pack ./faces --rtf ./newgen.rtf --config ./faces/config.xml --fm 2024
+fm-newgen-faces detect          # list Football Manager installations found
+fm-newgen-faces restore --list  # list config.xml backups; --to <backup> restores one
+fm-newgen-faces profiles        # list profiles
+fm-newgen-faces version
 ```
 
-## Configuration
+## Ethnic groups and overrides
 
-### Ethnic Group Mapping
-
-The tool automatically maps Football Manager nations to ethnic groups:
-
-| Ethnic Group | Code |
-|--------------|------|
-| African | African |
-| Asian | Asian |
-| Caucasian | Caucasian |
-| Central European | Central European |
-| Eastern European Central Asian | EECA |
-| Italian Mediterranean | Italmed |
-| Middle East North African | MENA |
-| Middle East South Asian | MESA |
-| South American Mediterranean | SAMed |
-| Scandinavian | Scandinavian |
-| South East Asian | Seasian |
-| South American | South American |
-| Spanish Mediterranean | SpanMed |
-| Yugoslav Greek | YugoGreek |
-
-### Custom Mappings
-
-You can override default mappings in the settings:
+Nations are mapped to the 14 face-pack groups (`African`, `Asian`, `Caucasian`, `Central European`, `EECA`, `Italmed`, `MENA`, `MESA`, `SAMed`, `Scandinavian`, `Seasian`, `South American`, `SpanMed`, `YugoGreek`) using FM's own ethnicity value plus the player's nations. You can override any nation in *Settings → Overrides*, or import/export a block like:
 
 ```toml
 [mapping_override]
-AFG = 'MESA'  # Afghanistan → Middle East South Asian
-ENG = 'Caucasian'  # England → Caucasian
+AFG = "MESA"
+ENG = "Caucasian"
 ```
 
-## How It Works
+## Supported Football Manager versions
 
-1. **Parse RTF File** - Extracts player data (ID, nationality, ethnic group)
-2. **Map Nations** - Converts nations to ethnic groups (with override support)
-3. **Select Images** - Randomly selects images from appropriate ethnic directories
-4. **Generate XML** - Creates Football Manager mapping file
-5. **Update Config** - Writes updated config.xml for FM
+FM20 – FM24 and FM26. FM24 and later use the `r-<id>` portrait naming; earlier versions use the bare id. If a future release changes the naming, it is a one-line change in `internal/core/fmversion`.
+
+## Where files live
+
+| What | Location |
+|---|---|
+| Profiles, app state, log, backups | Linux `~/.config/fm-newgen-faces`, macOS `~/Library/Application Support/fm-newgen-faces`, Windows `%AppData%\fm-newgen-faces` |
+| Views / filters installed into FM | `<FM user folder>/views`, `<FM user folder>/filters` |
+| Legacy 1.x profiles | migrated once from `~/.jaqen` (or the OS equivalent) |
+
+## Build from source
+
+Requires Go 1.24+ and, on Linux, the Fyne build dependencies (`libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libgtk-3-dev pkg-config`).
+
+```bash
+git clone https://github.com/chafficui/jaqen-newgen-tool.git
+cd jaqen-newgen-tool
+make build     # → ./fm-newgen-faces
+make check     # gofmt, vet, tests
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the code is organised.
 
 ## Credits
 
-This project is a fork and continuation of the original work:
+- Original tool: [Jaqen](https://github.com/imfulee/jaqen) by [@imfulee](https://github.com/imfulee)
+- Views and filters: [NewGAN-Manager](https://github.com/Maradonna90/NewGAN-Manager) by [@Maradonna90](https://github.com/Maradonna90)
 
-- **Base Project**: [Jaqen](https://github.com/imfulee/jaqen) by [@imfulee](https://github.com/imfulee)
-- **Views & Filters**: [NewGAN-Manager](https://github.com/Maradonna90/NewGAN-Manager) by [@Maradonna90](https://github.com/Maradonna90)
-- **Inspiration**: Named after Jaqen H'ghar from Game of Thrones (wall of faces)
+Football Manager is a trademark of Sports Interactive / SEGA. This is an independent community tool.
 
 ## License
 
-This project is licensed under the GPL v3 License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Support
-
-- 📖 **Documentation**: Check the [docs/](docs/) folder
-- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/chafficui/jaqen-newgen-tool/issues)
+GPL v3 – see [LICENSE](LICENSE).

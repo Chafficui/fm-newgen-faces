@@ -1,9 +1,14 @@
-jaqen
-.vscode
-.idea
+# binaries
+/fm-newgen-faces
+/fm-newgen-faces.exe
+/jaqen
+/jaqen-newgen-tool
+/dist/
+# editors
+.vscode/
+.idea/
 .cursor/
-jaqen-newgen-tool
-config.xml
-newgen.rtf
-jaqen.toml
-jaqen.log
+# local test data
+/config.xml
+/newgen.rtf
+/*.log
