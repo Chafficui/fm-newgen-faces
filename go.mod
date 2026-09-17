@@ -6,7 +6,6 @@ toolchain go1.23.2
 
 require (
 	fyne.io/fyne/v2 v2.6.3
-	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/spf13/cobra v1.8.0
