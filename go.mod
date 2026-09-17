@@ -1,4 +1,4 @@
-module jaqen
+module fmnewgenfaces
 
 go 1.21.0
 

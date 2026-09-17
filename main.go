@@ -2,7 +2,7 @@
 
 package main
 
-import cmd "jaqen/cmd"
+import cmd "fmnewgenfaces/cmd"
 
 func main() {
 	cmd.Execute()
