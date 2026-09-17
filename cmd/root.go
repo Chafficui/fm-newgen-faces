@@ -3,27 +3,64 @@
 package cmd
 
 import (
-	"log"
+	"errors"
+	"os"
 
 	"github.com/spf13/cobra"
 
 	"fmnewgenfaces/gui"
 	"fmnewgenfaces/internal/brand"
+	"fmnewgenfaces/internal/i18n"
 )
 
-var rootCmd = &cobra.Command{
-	Use:   brand.BinaryName,
-	Short: brand.AppName + " – faces for Football Manager newgens",
-	Run:   func(cmd *cobra.Command, args []string) { gui.Run() },
-}
+// newRootCmd builds a fresh command tree. It is a constructor (rather than a
+// package-level var) so every invocation, and every test, starts with clean
+// flag state.
+func newRootCmd() *cobra.Command {
+	var configDir string
+	var lang string
 
-// Execute runs the root command.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatalln(err)
+	root := &cobra.Command{
+		Use:          brand.BinaryName,
+		Short:        brand.AppName + " – faces for Football Manager newgens",
+		Args:         cobra.NoArgs,
+		SilenceUsage: true,
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+			i18n.Init(lang)
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			gui.Run()
+			return nil
+		},
 	}
+
+	root.PersistentFlags().StringVar(&configDir, "config-dir", "", "profile and backup directory (default: the OS user config directory)")
+	root.PersistentFlags().StringVar(&lang, "lang", "", "UI language code (e.g. en, de)")
+
+	root.AddCommand(
+		newGUICmd(),
+		newVersionCmd(),
+		newProfilesCmd(&configDir),
+		newDetectCmd(),
+		newCheckCmd(&configDir),
+		newAssignCmd(&configDir),
+		newRestoreCmd(&configDir),
+	)
+
+	return root
 }
 
-func init() {
-	rootCmd.AddCommand(guiCmd)
+// Execute runs the root command and exits the process with the code carried
+// by an *exitError (see errors.go), or 1 for any other error.
+func Execute() {
+	err := newRootCmd().Execute()
+	if err == nil {
+		return
+	}
+	var ee *exitError
+	if errors.As(err, &ee) {
+		os.Exit(ee.code)
+	}
+	os.Exit(1)
 }

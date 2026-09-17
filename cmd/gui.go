@@ -6,8 +6,14 @@ import (
 	"fmnewgenfaces/gui"
 )
 
-var guiCmd = &cobra.Command{
-	Use:   "gui",
-	Short: "Launch the desktop application (default)",
-	Run:   func(cmd *cobra.Command, args []string) { gui.Run() },
+func newGUICmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "gui",
+		Short: "Launch the desktop application (default)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			gui.Run()
+			return nil
+		},
+	}
 }
