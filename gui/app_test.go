@@ -12,6 +12,7 @@ import (
 	"fmnewgenfaces/internal/core/ethnic"
 	"fmnewgenfaces/internal/core/pipeline"
 	"fmnewgenfaces/internal/core/profile"
+	"fmnewgenfaces/internal/core/rtf"
 )
 
 // rtfSample uses the same column format as
@@ -68,6 +69,17 @@ func newTestApp(t *testing.T) *App {
 	a := newApp(dir, fyneApp)
 	t.Cleanup(func() {
 		a.stopWatcher()
+		// evaluate() schedules a debounced timer that outlives this test if
+		// nothing waits for it (e.g. after a successful executeRun); left
+		// running, its doUI callback can fire during a later test's
+		// newApp()/buildLayout(), which touches Fyne's global
+		// text-measurement cache without going through doUI's mutex. Cancel
+		// it so no test leaks a background UI mutation into the next one.
+		a.evalMu.Lock()
+		if a.evalTimer != nil {
+			a.evalTimer.Stop()
+		}
+		a.evalMu.Unlock()
 	})
 	return a
 }
@@ -137,25 +149,106 @@ func TestStartRunHelpersWriteConfig(t *testing.T) {
 		t.Fatalf("config.xml should not exist yet")
 	}
 
-	// Exercise the same non-dialog logic startRun uses, without going
-	// through the preview/unmapped-resolver dialogs.
+	// Exercise the same non-dialog logic startRun/continueRun use, without
+	// going through the preview/unmapped-resolver dialogs.
 	settings := cloneSettings(a.current.Settings)
 	in, err := pipeline.Load(settings)
 	if err != nil {
 		t.Fatalf("pipeline.Load: %v", err)
 	}
-	a.inputs = in
+	a.setInputs(in)
 	plan := pipeline.Plan(in)
 
-	a.executeRun(plan)
+	// executeRun no longer manages a.running itself (startRun/continueRun
+	// own that for the whole preview/run flow), so the test sets it the
+	// same way startRun would before calling in.
+	a.runMu.Lock()
+	a.running = true
+	a.runMu.Unlock()
 
-	waitUntil(t, 2*time.Second, func() bool {
-		a.runMu.Lock()
-		defer a.runMu.Unlock()
-		return !a.running
-	})
+	a.executeRun(in, plan)
+
+	waitUntil(t, 2*time.Second, func() bool { return !a.isRunning() })
 
 	if _, err := os.Stat(a.current.Settings.ConfigXML); err != nil {
 		t.Fatalf("expected config.xml to exist after executeRun: %v", err)
+	}
+}
+
+// TestExecuteRunIgnoresAppInputs is finding 3(a): executeRun must use the
+// *pipeline.Inputs its plan was built from, threaded in explicitly, and
+// never re-read a.inputs — which may have been replaced (e.g. by
+// applyProfile switching profiles) while a preview built from the original
+// inputs is still open.
+func TestExecuteRunIgnoresAppInputs(t *testing.T) {
+	a := newTestApp(t)
+	p := newTestProfile(t, a)
+
+	a.refreshProfileList()
+	a.applyProfile(p)
+
+	if _, err := os.Stat(a.current.Settings.ConfigXML); err == nil {
+		t.Fatalf("config.xml should not exist yet")
+	}
+
+	settings := cloneSettings(a.current.Settings)
+	in, err := pipeline.Load(settings)
+	if err != nil {
+		t.Fatalf("pipeline.Load: %v", err)
+	}
+	plan := pipeline.Plan(in)
+
+	// Simulate a.inputs being cleared out from under this in-flight
+	// plan/inputs pair, e.g. by applyProfile.
+	a.setInputs(nil)
+
+	a.runMu.Lock()
+	a.running = true
+	a.runMu.Unlock()
+
+	a.executeRun(in, plan)
+
+	waitUntil(t, 2*time.Second, func() bool { return !a.isRunning() })
+
+	if _, err := os.Stat(a.current.Settings.ConfigXML); err != nil {
+		t.Fatalf("expected config.xml to exist after executeRun despite a.inputs being nil: %v", err)
+	}
+}
+
+// TestStartRunNoopWhileRunning is finding 3(b): startRun must return early,
+// without touching a.inputs, when a run/preview flow is already in
+// progress.
+func TestStartRunNoopWhileRunning(t *testing.T) {
+	a := newTestApp(t)
+	p := newTestProfile(t, a)
+	a.refreshProfileList()
+	a.applyProfile(p)
+
+	a.runMu.Lock()
+	a.running = true
+	a.runMu.Unlock()
+
+	a.startRun(true) // dryRun Preview; must be a no-op while already running
+
+	if a.getInputs() != nil {
+		t.Fatalf("startRun should not have loaded inputs while a run was already in progress")
+	}
+	if !a.isRunning() {
+		t.Fatalf("startRun must not clear a.running when it declines to start")
+	}
+}
+
+// TestReviewRerollErrorsWhenNoInputs is finding 2's error path: reviewReroll
+// must return an error, not panic, when no inputs are loaded.
+func TestReviewRerollErrorsWhenNoInputs(t *testing.T) {
+	a := newTestApp(t)
+
+	if a.getInputs() != nil {
+		t.Fatalf("expected no inputs loaded on a fresh app")
+	}
+
+	_, err := a.reviewReroll(rtf.Player{ID: "2000000001", Name: "Uno"})
+	if err == nil {
+		t.Fatalf("expected reviewReroll to error out when no inputs are loaded")
 	}
 }

@@ -55,9 +55,14 @@ func renderChecklistText(rows []widgets.ChecklistRow) string {
 }
 
 // showBugReport collects the redacted report in a goroutine (so it can be
-// cancelled by closing the dialog) and shows it once ready.
+// cancelled by closing the dialog) and shows it once ready. a.current is
+// the UI thread's live *profile.Profile — settingsChanged mutates its
+// fields in place rather than replacing the pointer — so it, and the
+// profile list, are cloned here (on the UI thread) before being handed to
+// the goroutine, which must not read live UI-owned state.
 func (a *App) showBugReport() {
-	cur := a.current
+	cur := a.current.Clone()
+	profiles := a.store.List() // already copies (see profile.Store.List)
 
 	entry := widget.NewMultiLineEntry()
 	entry.Wrapping = fyne.TextWrapWord
@@ -96,7 +101,7 @@ func (a *App) showBugReport() {
 		}
 		text := bugreport.Build(bugreport.Info{
 			Version:   brand.Version,
-			Profiles:  a.store.List(),
+			Profiles:  profiles,
 			Current:   cur,
 			LogTail:   a.logTail(100),
 			Checklist: checklistText,

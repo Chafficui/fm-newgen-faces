@@ -79,9 +79,11 @@ func (t *PackTable) SetPack(p *facepack.Pack) { t.setPack(p) }
 
 // ShowPreview opens the dry-run dialog: totals (new / preserved / unmapped),
 // a per-ethnic table (needed / available / shortfall) and warnings. The
-// confirm button label is confirmLabel; onConfirm runs when pressed.
-func ShowPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConfirm func()) {
-	showPreview(win, plan, confirmLabel, onConfirm)
+// confirm button label is confirmLabel; onConfirm runs when pressed. onClose
+// runs once the dialog closes, regardless of how (confirm, cancel or
+// escape), after onConfirm when that ran; either may be nil.
+func ShowPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConfirm func(), onClose func()) {
+	showPreview(win, plan, confirmLabel, onConfirm, onClose)
 }
 
 // SummaryActions are the buttons offered after a run; nil funcs hide a button.

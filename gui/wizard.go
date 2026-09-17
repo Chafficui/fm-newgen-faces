@@ -70,17 +70,34 @@ func (a *App) showWizard() {
 	doneLabel.Wrapping = fyne.TextWrapWord
 	step4 := container.NewVBox(doneLabel)
 
+	// lastPackCheck/lastPackOK cache the previous facepack.LooksLikePack
+	// result for step 2's Validate, keyed by path, so repeated Next clicks
+	// on an unchanged path don't rescan the directory.
+	var lastPackCheck string
+	var lastPackOK bool
+
 	steps := []widgets.WizardStep{
 		{Title: i18n.T("gui.wizard.step1_title"), Content: step1},
 		{
 			Title:   i18n.T("gui.wizard.step2_title"),
 			Content: step2,
+			// widgets.WizardStep.Validate is synchronous by contract (the
+			// stepper calls it inline from Next and expects an immediate
+			// result), so this stays on the UI thread. facepack.LooksLikePack
+			// only does a single os.ReadDir, which is cheap enough for that;
+			// the cache below just avoids repeating it when the user mashes
+			// Next without having changed the path.
 			Validate: func() error {
 				v := packRow.Text()
 				if v == "" {
+					lastPackCheck, lastPackOK = "", false
 					return errors.New(i18n.T("gui.wizard.pack_required"))
 				}
-				if !facepack.LooksLikePack(v, 10) {
+				if v != lastPackCheck {
+					lastPackCheck = v
+					lastPackOK = facepack.LooksLikePack(v, 10)
+				}
+				if !lastPackOK {
 					return errors.New(i18n.T("gui.wizard.pack_invalid"))
 				}
 				return nil
@@ -108,8 +125,8 @@ func (a *App) showWizard() {
 	}
 
 	onDone := func() {
-		a.state.WizardDone = true
-		if err := a.store.SaveState(a.state); err != nil {
+		state := a.updateState(func(s *profile.State) { s.WizardDone = true })
+		if err := a.store.SaveState(state); err != nil {
 			a.errorf("saving app state: %v", err)
 		}
 
@@ -151,8 +168,8 @@ func (a *App) showWizard() {
 	}
 
 	onCancel := func() {
-		a.state.WizardDone = true
-		if err := a.store.SaveState(a.state); err != nil {
+		state := a.updateState(func(s *profile.State) { s.WizardDone = true })
+		if err := a.store.SaveState(state); err != nil {
 			a.errorf("saving app state: %v", err)
 		}
 	}

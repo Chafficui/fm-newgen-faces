@@ -13,6 +13,7 @@ import (
 	"fmnewgenfaces/internal/core/ethnic"
 	"fmnewgenfaces/internal/core/fmversion"
 	"fmnewgenfaces/internal/core/pipeline"
+	"fmnewgenfaces/internal/core/profile"
 	"fmnewgenfaces/internal/i18n"
 )
 
@@ -42,11 +43,11 @@ func (a *App) buildHeader() fyne.CanvasObject {
 	})
 	a.profileSelect.PlaceHolder = i18n.T("gui.header.no_profiles")
 
-	newBtn := widget.NewButtonWithIcon(i18n.T("gui.header.new_profile"), theme.ContentAddIcon(), a.newProfile)
-	renameBtn := widget.NewButtonWithIcon(i18n.T("gui.header.rename"), theme.DocumentCreateIcon(), a.renameProfile)
-	deleteBtn := widget.NewButtonWithIcon(i18n.T("gui.header.delete"), theme.DeleteIcon(), a.deleteProfile)
+	a.newProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.new_profile"), theme.ContentAddIcon(), a.newProfile)
+	a.renameProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.rename"), theme.DocumentCreateIcon(), a.renameProfile)
+	a.deleteProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.delete"), theme.DeleteIcon(), a.deleteProfile)
 
-	left := container.NewHBox(a.profileSelect, newBtn, renameBtn, deleteBtn)
+	left := container.NewHBox(a.profileSelect, a.newProfileBtn, a.renameProfileBtn, a.deleteProfileBtn)
 
 	helpBtn := widget.NewButtonWithIcon(i18n.T("gui.header.help"), theme.HelpIcon(), a.showHelp)
 	bugBtn := widget.NewButtonWithIcon(i18n.T("gui.header.report_bug"), theme.MailComposeIcon(), a.showBugReport)
@@ -91,16 +92,16 @@ func (a *App) themeMenuItem(setting, label string) *fyne.MenuItem {
 
 func (a *App) setTheme(setting string) {
 	a.themeSetting = setting
-	a.state.Theme = setting
+	state := a.updateState(func(s *profile.State) { s.Theme = setting })
 	a.fyneApp.Settings().SetTheme(newTheme(setting))
-	if err := a.store.SaveState(a.state); err != nil {
+	if err := a.store.SaveState(state); err != nil {
 		a.errorf("saving app state: %v", err)
 	}
 }
 
 func (a *App) setLanguage(code string) {
-	a.state.Language = code
-	if err := a.store.SaveState(a.state); err != nil {
+	state := a.updateState(func(s *profile.State) { s.Language = code })
+	if err := a.store.SaveState(state); err != nil {
 		a.errorf("saving app state: %v", err)
 	}
 	dialog.ShowInformation(i18n.T("gui.settings_menu.language"), i18n.T("gui.settings_menu.language_restart"), a.win)

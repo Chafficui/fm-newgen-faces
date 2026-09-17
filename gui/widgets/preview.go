@@ -26,7 +26,7 @@ func previewHeaders() []string {
 	}
 }
 
-func showPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConfirm func()) {
+func showPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConfirm func(), onClose func()) {
 	if plan == nil {
 		return
 	}
@@ -110,6 +110,12 @@ func showPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConf
 			onConfirm()
 		}
 	}, win)
+	// onClose fires once the dialog closes however that happened (confirm,
+	// cancel or escape); the caller uses it to know when it is safe to
+	// start another run.
+	if onClose != nil {
+		d.SetOnClosed(onClose)
+	}
 	d.Resize(fyne.NewSize(700, 520))
 	d.Show()
 }

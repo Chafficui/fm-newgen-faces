@@ -25,6 +25,14 @@ func (a *App) backupBaseDir() string {
 // true means "Preview": the resulting dialog has no functional confirm
 // action. Assign always shows the same preview first; only its confirm
 // button actually writes anything.
+//
+// a.running stays true for the whole flow this kicks off — Load, the
+// unmapped-nation resolver (if shown), the preview dialog and, if
+// confirmed, the run itself — and is only cleared by finishRun, which runs
+// from whichever of those steps ends the flow without handing off to the
+// next one (see continueRun and executeRun). This keeps a second startRun
+// from being able to replace a.inputs (or start a second write) while a
+// dialog for the current inputs/plan is still open.
 func (a *App) startRun(dryRun bool) {
 	if a.current == nil {
 		dialog.ShowInformation(i18n.T("gui.run.no_profile_title"), i18n.T("gui.run.no_profile_body"), a.win)
@@ -34,12 +42,13 @@ func (a *App) startRun(dryRun bool) {
 	a.runMu.Lock()
 	if a.running {
 		a.runMu.Unlock()
+		a.logf("a run is already in progress; ignoring")
 		return
 	}
 	a.running = true
 	a.runMu.Unlock()
 
-	a.setRunButtonsEnabled(false)
+	a.setBusy(true)
 	a.progress.Reset()
 	a.progress.SetIndeterminate(true)
 
@@ -60,26 +69,27 @@ func (a *App) startRun(dryRun bool) {
 		}
 
 		doUI(func() {
-			a.inputs = in
+			a.setInputs(in)
 			if len(in.RTF.UnmappedPlayers) > 0 {
 				widgets.ShowUnmappedResolver(a.win, in.RTF.Unmapped, ethnic.Names(),
 					func(sel map[string]string) {
-						a.applyUnmappedOverrides(sel)
-						a.continueRun(dryRun)
+						a.applyUnmappedOverrides(in, sel)
+						a.continueRun(dryRun, in)
 					},
-					func() { a.continueRun(dryRun) },
+					func() { a.continueRun(dryRun, in) },
 				)
 				return
 			}
-			a.continueRun(dryRun)
+			a.continueRun(dryRun, in)
 		})
 	}()
 }
 
 // applyUnmappedOverrides saves the user's nation->ethnic choices onto the
-// current profile and re-resolves the already-parsed RTF result in place.
-func (a *App) applyUnmappedOverrides(sel map[string]string) {
-	if len(sel) == 0 || a.current == nil || a.inputs == nil {
+// current profile and re-resolves the already-parsed RTF result (in, the
+// same *pipeline.Inputs the caller is about to build a plan from) in place.
+func (a *App) applyUnmappedOverrides(in *pipeline.Inputs, sel map[string]string) {
+	if len(sel) == 0 || a.current == nil || in == nil {
 		return
 	}
 	if a.current.Settings.Overrides == nil {
@@ -96,46 +106,59 @@ func (a *App) applyUnmappedOverrides(sel map[string]string) {
 	if rErr != nil {
 		a.warnf("override error: %v", rErr)
 	}
-	a.inputs.Resolver = resolver
-	a.inputs.RTF.Resolve(resolver)
+	in.Resolver = resolver
+	in.RTF.Resolve(resolver)
 	if a.overrideEditor != nil {
 		a.overrideEditor.Refresh()
 	}
 }
 
-// continueRun builds the plan and shows the preview dialog. The Load phase
-// is over, so the run buttons are re-enabled here; the preview/summary
-// dialogs are modal and block further interaction until dismissed.
-func (a *App) continueRun(dryRun bool) {
-	a.finishRun()
-	if a.inputs == nil {
+// continueRun builds the plan from in (the inputs startRun loaded) and
+// shows the preview dialog. It does NOT call finishRun before showing the
+// dialog: a.running stays true until the dialog is dismissed (onClose,
+// below) or, once confirmed, until the run it starts completes.
+func (a *App) continueRun(dryRun bool, in *pipeline.Inputs) {
+	if in == nil {
+		a.finishRun()
 		return
 	}
-	plan := pipeline.Plan(a.inputs)
+	plan := pipeline.Plan(in)
+
+	// Load is done; stop the indeterminate spinner for the preview dialog
+	// even though a.running (and the disabled buttons) stay in effect until
+	// it is dismissed or a run it starts completes.
+	a.progress.SetIndeterminate(false)
 
 	if dryRun {
-		widgets.ShowPreview(a.win, plan, i18n.T("common.close"), nil)
+		// Read-only: whichever button closes it, there is nothing left to
+		// wait on.
+		widgets.ShowPreview(a.win, plan, i18n.T("common.close"), nil, a.finishRun)
 		return
 	}
+
+	var confirmed bool
 	widgets.ShowPreview(a.win, plan, i18n.T("gui.run.assign"), func() {
-		a.executeRun(plan)
+		confirmed = true
+		a.executeRun(in, plan)
+	}, func() {
+		// onConfirm (above) always runs before onClose for the same button
+		// press, so confirmed is already set when the user actually
+		// confirmed; executeRun's own completion calls finishRun in that
+		// case. Otherwise (cancel/escape) nothing else will, so do it here.
+		if !confirmed {
+			a.finishRun()
+		}
 	})
 }
 
-// executeRun applies plan and saves config.xml (with backup).
-func (a *App) executeRun(plan *assign.Plan) {
-	a.runMu.Lock()
-	if a.running {
-		a.runMu.Unlock()
-		return
-	}
-	a.running = true
-	a.runMu.Unlock()
-
-	a.setRunButtonsEnabled(false)
+// executeRun applies plan (built from in) and saves config.xml (with
+// backup). in and plan are exactly what the just-dismissed preview showed;
+// the caller (continueRun) guarantees a.running is already true and that no
+// other run can be in flight, so this never re-reads a.inputs, which may
+// already have been replaced by a newer startRun by the time this runs.
+func (a *App) executeRun(in *pipeline.Inputs, plan *assign.Plan) {
 	a.progress.Reset()
 
-	in := a.inputs
 	backupBase := a.backupBaseDir()
 
 	go func() {
@@ -168,14 +191,30 @@ func (a *App) executeRun(plan *assign.Plan) {
 	}()
 }
 
+// finishRun ends the busy flow started by startRun: clears a.running and
+// re-enables the run/profile controls. It runs from every path that ends
+// the flow without handing off to the next step (load failure, no inputs,
+// a dismissed/cancelled preview) and from the run itself completing.
 func (a *App) finishRun() {
 	a.runMu.Lock()
 	a.running = false
 	a.runMu.Unlock()
-	a.setRunButtonsEnabled(true)
+	a.setBusy(false)
 	a.progress.SetIndeterminate(false)
 }
 
+// isRunning reports whether a run/preview flow is currently in progress.
+// Safe to call from any goroutine.
+func (a *App) isRunning() bool {
+	a.runMu.Lock()
+	defer a.runMu.Unlock()
+	return a.running
+}
+
+// setRunButtonsEnabled enables/disables just the Preview/Assign/Undo/Open
+// buttons. setBusy also covers the profile controls; prefer it for the
+// run/preview flow. Kept separate because tests and the undo flow only
+// need the run buttons.
 func (a *App) setRunButtonsEnabled(enabled bool) {
 	for _, b := range []*widget.Button{a.previewBtn, a.assignBtn, a.undoBtn, a.openFolderBtn} {
 		if b == nil {
@@ -185,6 +224,33 @@ func (a *App) setRunButtonsEnabled(enabled bool) {
 			b.Enable()
 		} else {
 			b.Disable()
+		}
+	}
+}
+
+// setBusy disables (or re-enables) everything that could otherwise
+// interfere with the current run/preview flow: the run buttons plus the
+// profile Select and New/Rename/Delete buttons, since switching or
+// deleting the active profile mid-run would pull a.current (and the
+// backing files) out from under it.
+func (a *App) setBusy(busy bool) {
+	a.setRunButtonsEnabled(!busy)
+
+	if a.profileSelect != nil {
+		if busy {
+			a.profileSelect.Disable()
+		} else {
+			a.profileSelect.Enable()
+		}
+	}
+	for _, b := range []*widget.Button{a.newProfileBtn, a.renameProfileBtn, a.deleteProfileBtn} {
+		if b == nil {
+			continue
+		}
+		if busy {
+			b.Disable()
+		} else {
+			b.Enable()
 		}
 	}
 }
@@ -247,24 +313,30 @@ func (a *App) loadCurrentMappings() {
 				dialog.ShowError(err, a.win)
 				return
 			}
-			a.inputs = in
+			a.setInputs(in)
 			a.reviewTable.SetAssignments(pipeline.Assignments(in))
 		})
 	}()
 }
 
 func (a *App) reviewImagePath(asn assign.Assignment) string {
-	if a.inputs == nil {
+	in := a.getInputs()
+	if in == nil {
 		return ""
 	}
-	return pipeline.ImageFile(a.inputs, asn)
+	return pipeline.ImageFile(in, asn)
 }
 
+// reviewReroll is called from widgets.ReviewTable's own goroutine (its
+// Reroll button), concurrently with the UI thread possibly clearing
+// a.inputs (applyProfile). Take a single snapshot via getInputs and use
+// only that, rather than reading a.inputs more than once.
 func (a *App) reviewReroll(p rtf.Player) (assign.Assignment, error) {
-	if a.inputs == nil {
+	in := a.getInputs()
+	if in == nil {
 		return assign.Assignment{}, errors.New("no data loaded: use \"Load current mappings\" or run a preview/assign first")
 	}
-	asn, err := pipeline.Reroll(a.inputs, p, a.backupBaseDir())
+	asn, err := pipeline.Reroll(in, p, a.backupBaseDir())
 	if err == nil {
 		a.logf("rerolled %s (%s) -> %s", p.Name, p.ID, asn.Image)
 	}

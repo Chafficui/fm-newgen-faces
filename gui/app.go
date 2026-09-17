@@ -33,8 +33,17 @@ type App struct {
 	fyneApp fyne.App
 	win     fyne.Window
 
-	store     *profile.Store
-	state     profile.State
+	store *profile.Store
+
+	// state is the persisted app-wide settings (window geometry, last
+	// profile, theme/language, update-check bookkeeping). It is read and
+	// written both from the UI thread (onClose, setTheme, setLanguage, the
+	// wizard) and from the startup/update-check goroutine (runUpdateCheck),
+	// so every access goes through getState/updateState rather than the
+	// field directly.
+	stateMu sync.Mutex
+	state   profile.State
+
 	current   *profile.Profile
 	autosaver *profile.Autosaver
 
@@ -43,7 +52,12 @@ type App struct {
 	logTee  *teeWriter
 	logView *widgets.LogView
 
-	inputs *pipeline.Inputs
+	// inputs is loaded on a background goroutine (startRun, loadCurrentMappings)
+	// and cleared on the UI thread (applyProfile) while widgets.ReviewTable's
+	// own reroll goroutine reads it via reviewReroll, so every access goes
+	// through inputsMu/getInputs/setInputs rather than the field directly.
+	inputsMu sync.Mutex
+	inputs   *pipeline.Inputs
 
 	// loading suppresses onChanged/autosave handlers while applyProfile is
 	// filling the UI from a profile that was just loaded.
@@ -52,9 +66,12 @@ type App struct {
 	themeSetting string // "system", "light", "dark"
 
 	// header
-	profileSelect *widget.Select
-	profiles      []*profile.Profile
-	bannerSlot    *fyne.Container
+	profileSelect    *widget.Select
+	newProfileBtn    *widget.Button
+	renameProfileBtn *widget.Button
+	deleteProfileBtn *widget.Button
+	profiles         []*profile.Profile
+	bannerSlot       *fyne.Container
 
 	tabs *container.AppTabs
 
@@ -187,15 +204,50 @@ func doUI(fn func()) {
 	fyne.Do(fn)
 }
 
+// getState returns a copy of the app state, safe to call from any goroutine.
+func (a *App) getState() profile.State {
+	a.stateMu.Lock()
+	defer a.stateMu.Unlock()
+	return a.state
+}
+
+// updateState applies fn to the app state under the lock and returns the
+// resulting copy (typically passed straight to store.SaveState). Safe to
+// call from any goroutine.
+func (a *App) updateState(fn func(*profile.State)) profile.State {
+	a.stateMu.Lock()
+	defer a.stateMu.Unlock()
+	fn(&a.state)
+	return a.state
+}
+
+// getInputs returns the currently loaded pipeline inputs (nil if none),
+// safe to call from any goroutine.
+func (a *App) getInputs() *pipeline.Inputs {
+	a.inputsMu.Lock()
+	defer a.inputsMu.Unlock()
+	return a.inputs
+}
+
+// setInputs replaces the currently loaded pipeline inputs, safe to call
+// from any goroutine.
+func (a *App) setInputs(in *pipeline.Inputs) {
+	a.inputsMu.Lock()
+	a.inputs = in
+	a.inputsMu.Unlock()
+}
+
 // onClose persists window geometry/last profile and flushes pending saves.
 func (a *App) onClose() {
 	size := a.win.Canvas().Size()
-	a.state.WindowWidth = size.Width
-	a.state.WindowHeight = size.Height
-	if a.current != nil {
-		a.state.LastProfile = a.current.Slug
-	}
-	if err := a.store.SaveState(a.state); err != nil {
+	state := a.updateState(func(s *profile.State) {
+		s.WindowWidth = size.Width
+		s.WindowHeight = size.Height
+		if a.current != nil {
+			s.LastProfile = a.current.Slug
+		}
+	})
+	if err := a.store.SaveState(state); err != nil {
 		a.errorf("saving app state: %v", err)
 	}
 	a.autosaver.Flush()

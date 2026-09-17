@@ -49,7 +49,7 @@ func (a *App) selectProfile(slug string) {
 	a.profileSelect.SetSelected(p.Name)
 	a.loading = false
 
-	a.state.LastProfile = p.Slug
+	a.updateState(func(s *profile.State) { s.LastProfile = p.Slug })
 	a.rearmWatcher()
 	a.evaluate()
 }
@@ -60,7 +60,7 @@ func (a *App) applyProfile(p *profile.Profile) {
 	defer func() { a.loading = false }()
 
 	a.current = p
-	a.inputs = nil
+	a.setInputs(nil)
 
 	a.packRow.SetText(p.Settings.PackDir)
 	a.configRow.SetText(p.Settings.ConfigXML)

@@ -80,9 +80,10 @@ func (a *App) selectInitialProfile() {
 	doUI(func() {
 		a.refreshProfileList()
 
+		lastProfile := a.getState().LastProfile
 		slug := ""
 		for _, p := range profiles {
-			if p.Slug == a.state.LastProfile {
+			if p.Slug == lastProfile {
 				slug = p.Slug
 				break
 			}
@@ -101,7 +102,7 @@ func (a *App) selectInitialProfile() {
 				break
 			}
 		}
-		if !anyPackSet && !a.state.WizardDone {
+		if !anyPackSet && !a.getState().WizardDone {
 			a.showWizard()
 		}
 	})
@@ -115,7 +116,7 @@ func (a *App) checkForUpdatesNow() {
 }
 
 func (a *App) runUpdateCheck(force bool) {
-	if !force && time.Since(a.state.LastUpdateCheck) < updateCheckPeriod {
+	if !force && time.Since(a.getState().LastUpdateCheck) < updateCheckPeriod {
 		return
 	}
 
@@ -127,8 +128,8 @@ func (a *App) runUpdateCheck(force bool) {
 		return
 	}
 
-	a.state.LastUpdateCheck = time.Now()
-	if err := a.store.SaveState(a.state); err != nil {
+	state := a.updateState(func(s *profile.State) { s.LastUpdateCheck = time.Now() })
+	if err := a.store.SaveState(state); err != nil {
 		a.errorf("saving app state: %v", err)
 	}
 
@@ -140,7 +141,7 @@ func (a *App) runUpdateCheck(force bool) {
 		}
 		return
 	}
-	if !force && rel.Version == a.state.SkippedVersion {
+	if !force && rel.Version == a.getState().SkippedVersion {
 		return
 	}
 
@@ -150,8 +151,8 @@ func (a *App) runUpdateCheck(force bool) {
 				a.errorf("opening release page: %v", err)
 			}
 		}, func() {
-			a.state.SkippedVersion = rel.Version
-			if err := a.store.SaveState(a.state); err != nil {
+			state := a.updateState(func(s *profile.State) { s.SkippedVersion = rel.Version })
+			if err := a.store.SaveState(state); err != nil {
 				a.errorf("saving app state: %v", err)
 			}
 		}))
