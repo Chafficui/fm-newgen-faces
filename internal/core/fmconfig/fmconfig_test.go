@@ -433,3 +433,67 @@ func TestAssignedImagesAndDelete(t *testing.T) {
 		t.Errorf("AssignedImages() after delete = %v", imgs)
 	}
 }
+
+func TestBackupsInSameSecondDoNotCollide(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.xml")
+	backups := filepath.Join(dir, "backups")
+	fixed := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	old := nowFunc
+	nowFunc = func() time.Time { return fixed }
+	defer func() { nowFunc = old }()
+
+	v, _ := fmversion.Lookup("2024")
+	cfg := New(path, v)
+	for _, img := range []string{"a", "b", "c"} {
+		cfg.Set("1", "African/"+img)
+		if _, err := cfg.Save(SaveOptions{BackupDir: backups}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	list, err := ListBackups(backups)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("expected 2 distinct backups for 3 saves in one second, got %d: %+v", len(list), list)
+	}
+}
+
+func TestRestoreKeepsSafetyCopy(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.xml")
+	backups := filepath.Join(dir, "backups")
+	v, _ := fmversion.Lookup("2024")
+	cfg := New(path, v)
+	cfg.Set("1", "African/first")
+	if _, err := cfg.Save(SaveOptions{BackupDir: backups}); err != nil {
+		t.Fatal(err)
+	}
+	cfg.Set("1", "African/second")
+	bp, err := cfg.Save(SaveOptions{BackupDir: backups})
+	if err != nil || bp == "" {
+		t.Fatalf("expected a backup, got %q %v", bp, err)
+	}
+	if err := Restore(bp, path); err != nil {
+		t.Fatal(err)
+	}
+	restored, _ := Load(path, v)
+	if from, _ := restored.Get("1"); from != "African/first" {
+		t.Fatalf("restore did not apply: %q", from)
+	}
+	list, _ := ListBackups(backups)
+	if len(list) != 2 {
+		t.Fatalf("restore should have backed up the current file first; backups=%d", len(list))
+	}
+	found := false
+	for _, b := range list {
+		c, _ := Load(b.Path, v)
+		if from, _ := c.Get("1"); from == "African/second" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("pre-restore state (African/second) was not preserved as a backup")
+	}
+}

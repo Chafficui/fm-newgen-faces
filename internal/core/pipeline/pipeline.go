@@ -66,6 +66,13 @@ func Check(s profile.Settings) []Problem {
 		out = append(out, Problem{"config", "folder for config.xml does not exist: " + filepath.Dir(s.ConfigXML)})
 	}
 
+	if s.PackDir != "" && s.ConfigXML != "" {
+		pv, cv := filepath.VolumeName(absOrSelf(s.PackDir)), filepath.VolumeName(absOrSelf(s.ConfigXML))
+		if !strings.EqualFold(pv, cv) {
+			out = append(out, Problem{"config", "config.xml must be on the same drive as the face pack (FM needs relative image paths): " + pv + " vs " + cv})
+		}
+	}
+
 	if s.RTFPath == "" {
 		out = append(out, Problem{"rtf", "no newgen export (RTF) selected"})
 	} else if st, err := os.Stat(s.RTFPath); err != nil || st.IsDir() {
@@ -76,6 +83,13 @@ func Check(s profile.Settings) []Problem {
 		out = append(out, Problem{"version", "unknown Football Manager version: " + s.FMVersion})
 	}
 	return out
+}
+
+func absOrSelf(p string) string {
+	if a, err := filepath.Abs(p); err == nil {
+		return a
+	}
+	return p
 }
 
 func versionOf(s profile.Settings) (fmversion.Version, bool) {

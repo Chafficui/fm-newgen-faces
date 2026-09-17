@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -219,7 +220,14 @@ func ImagePath(configPath, packRoot string, e ethnic.Ethnic, image string) (stri
 
 	rel, err := filepath.Rel(configDir, full)
 	if err != nil {
-		return "", err
+		// Different volumes (Windows drive letters / UNC): a relative path is
+		// impossible. Fall back to the absolute path rather than aborting
+		// the run; pipeline.Check warns about this setup up front.
+		abs, aerr := filepath.Abs(full)
+		if aerr != nil {
+			return "", err
+		}
+		return filepath.ToSlash(abs), nil
 	}
 
 	rel = filepath.ToSlash(rel)
@@ -370,7 +378,7 @@ var nowFunc = time.Now
 
 const backupTimeLayout = "20060102-150405"
 
-var backupNameRe = regexp.MustCompile(`^config-(\d{8}-\d{6})\.xml$`)
+var backupNameRe = regexp.MustCompile(`^config-(\d{8}-\d{6})(?:-\d+)?\.xml$`)
 
 func backupFile(srcPath, backupDir string) (string, error) {
 	if err := os.MkdirAll(backupDir, 0o755); err != nil {
@@ -381,8 +389,16 @@ func backupFile(srcPath, backupDir string) (string, error) {
 		return "", err
 	}
 
-	name := "config-" + nowFunc().Format(backupTimeLayout) + ".xml"
-	dest := filepath.Join(backupDir, name)
+	// Same-second saves (e.g. two quick rerolls) must not overwrite each
+	// other's backup, so disambiguate with a counter suffix when needed.
+	stem := "config-" + nowFunc().Format(backupTimeLayout)
+	dest := filepath.Join(backupDir, stem+".xml")
+	for i := 2; ; i++ {
+		if _, err := os.Stat(dest); err != nil {
+			break
+		}
+		dest = filepath.Join(backupDir, fmt.Sprintf("%s-%d.xml", stem, i))
+	}
 	tmp := dest + ".tmp"
 
 	if err := os.WriteFile(tmp, data, 0o644); err != nil {
@@ -395,6 +411,18 @@ func backupFile(srcPath, backupDir string) (string, error) {
 
 	return dest, nil
 }
+
+// backupSeq returns the "-N" collision counter of a backup file name (1 if none).
+func backupSeq(path string) int {
+	m := backupNameSeqRe.FindStringSubmatch(filepath.Base(path))
+	if m == nil || m[1] == "" {
+		return 1
+	}
+	n, _ := strconv.Atoi(m[1])
+	return n
+}
+
+var backupNameSeqRe = regexp.MustCompile(`^config-\d{8}-\d{6}(?:-(\d+))?\.xml$`)
 
 func pruneBackups(dir string, keep int) error {
 	backups, err := ListBackups(dir)
@@ -450,7 +478,8 @@ func ListBackups(dir string) ([]Backup, error) {
 		if !backups[i].Time.Equal(backups[j].Time) {
 			return backups[i].Time.After(backups[j].Time)
 		}
-		return backups[i].Path > backups[j].Path
+		// Same second: the disambiguating counter suffix marks the later one.
+		return backupSeq(backups[i].Path) > backupSeq(backups[j].Path)
 	})
 
 	return backups, nil
@@ -466,6 +495,14 @@ func Restore(backupPath, configPath string) error {
 	dir := filepath.Dir(configPath)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
+	}
+
+	// A restore must itself be undoable: keep the current file as a backup
+	// in the same backup folder before overwriting it.
+	if _, err := os.Stat(configPath); err == nil {
+		if _, err := backupFile(configPath, filepath.Dir(backupPath)); err != nil {
+			return fmt.Errorf("backup current config before restore: %w", err)
+		}
 	}
 
 	tmp := configPath + ".tmp"
