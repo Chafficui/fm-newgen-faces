@@ -135,3 +135,27 @@ func closeOverlays(a *App) {
 		a.win.Canvas().Overlays().Remove(o)
 	}
 }
+
+func copyDir(t *testing.T, from, to string) {
+	t.Helper()
+	entries, err := os.ReadDir(from)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		src := filepath.Join(from, e.Name())
+		dst := filepath.Join(to, e.Name())
+		if e.IsDir() {
+			os.MkdirAll(dst, 0o755)
+			copyDir(t, src, dst)
+			continue
+		}
+		data, err := os.ReadFile(src)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(dst, data, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+}

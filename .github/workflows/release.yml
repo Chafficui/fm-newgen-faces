@@ -92,16 +92,20 @@ jobs:
           NAME=fm-newgen-faces-${{ matrix.goos }}-${{ steps.v.outputs.version }}
           mkdir -p dist/$NAME
           cp README.md LICENSE dist/$NAME/
+          # Versioned archive plus an unversioned copy, so the website can
+          # link to releases/latest/download/fm-newgen-faces-<os>.<ext>.
           if [ "${{ matrix.goos }}" = "windows" ]; then
             cp fm-newgen-faces.exe dist/$NAME/
-            (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null)
+            (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null && cp $NAME.zip fm-newgen-faces-windows.zip)
           else
             cp fm-newgen-faces dist/$NAME/
-            (cd dist && tar -czf $NAME.tar.gz $NAME)
+            (cd dist && tar -czf $NAME.tar.gz $NAME && cp $NAME.tar.gz fm-newgen-faces-${{ matrix.goos }}.tar.gz)
           fi
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.v.outputs.tag }}
           name: FM NewGen Faces ${{ steps.v.outputs.version }}
-          files: dist/*.${{ matrix.archive }}
+          files: |
+            dist/*-${{ steps.v.outputs.version }}.${{ matrix.archive }}
+            dist/fm-newgen-faces-${{ matrix.goos }}.${{ matrix.archive }}
           generate_release_notes: true
