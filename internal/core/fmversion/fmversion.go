@@ -59,17 +59,24 @@ func Years() []string {
 func (v Version) Display() string { return v.Label + " (" + v.Year + ")" }
 
 var (
-	yearRe  = regexp.MustCompile(`(?i)football\s*manager\s*(20\d\d)`)
+	// "Football Manager 2024" (FM20–FM24) and "Football Manager 26" (FM26
+	// onwards, where SI dropped the century from the product name).
+	yearRe  = regexp.MustCompile(`(?i)football\s*manager\s*(20\d\d|\d\d)\b`)
 	shortRe = regexp.MustCompile(`(?i)\bfm\s*(\d\d)(\d\d)?\b`)
 )
 
 // FromPath extracts a version from any path segment such as
-// ".../Football Manager 2024/graphics" or ".../FM26/...". Unknown years that
-// still look like a Football Manager folder are returned as an ad-hoc Version
-// with the newest known IDPrefix, so a new release is never silently dropped.
+// ".../Football Manager 2024/graphics", ".../Football Manager 26/..." or
+// ".../FM26/...". Unknown years that still look like a Football Manager
+// folder are returned as an ad-hoc Version with the newest known IDPrefix,
+// so a new release is never silently dropped.
 func FromPath(p string) (Version, bool) {
 	if m := yearRe.FindStringSubmatch(p); m != nil {
-		return fromYear(m[1]), true
+		year := m[1]
+		if len(year) == 2 {
+			year = "20" + year
+		}
+		return fromYear(year), true
 	}
 	if m := shortRe.FindStringSubmatch(p); m != nil {
 		if m[2] != "" { // FM2024
