@@ -159,6 +159,9 @@ func (a *App) buildSetupTab() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
+	// The compact checklist, the three path rows and the version selector
+	// fit above the pack table at the default window height; the table is
+	// the Border's center and scrolls within whatever height remains.
 	return container.NewBorder(top, nil, nil, nil, a.packTable)
 }
 

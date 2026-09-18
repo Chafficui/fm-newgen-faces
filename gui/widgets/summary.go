@@ -11,6 +11,31 @@ import (
 
 const maxSkippedShown = 20
 
+// Dialog sizing: fixed width, height fit to content between a floor (the
+// no-skipped-players case) and a ceiling (a long skipped list scrolls
+// instead of growing the dialog past this).
+const (
+	summaryWidth     = 620
+	summaryMinHeight = 380
+	summaryMaxHeight = 540
+)
+
+// skippedScrollHeight sizes the skipped-players scroll area to the n lines
+// it holds (n is already capped at maxSkippedShown), up to a height that
+// still leaves room for the rest of the dialog under summaryMaxHeight.
+func skippedScrollHeight(n int) float32 {
+	const lineHeight float32 = 24
+	const capHeight float32 = 200
+	h := float32(n) * lineHeight
+	if h > capHeight {
+		h = capHeight
+	}
+	if h < lineHeight {
+		h = lineHeight
+	}
+	return h
+}
+
 func showSummary(win fyne.Window, plan *assign.Plan, res *assign.Result, backupPath string, actions SummaryActions) {
 	if res == nil {
 		return
@@ -38,8 +63,11 @@ func showSummary(win fyne.Window, plan *assign.Plan, res *assign.Result, backupP
 			list.Add(widget.NewLabel(T("widgets.summary.skipped_more", len(res.Skipped)-maxSkippedShown)))
 		}
 
+		// Size the skipped list to how many lines it actually has, capped so
+		// a long list scrolls instead of pushing the dialog past its max
+		// height (see the Resize call below).
 		scroll := container.NewVScroll(list)
-		scroll.SetMinSize(fyne.NewSize(0, 150))
+		scroll.SetMinSize(fyne.NewSize(0, skippedScrollHeight(n)))
 		content.Add(scroll)
 	}
 
@@ -77,6 +105,22 @@ func showSummary(win fyne.Window, plan *assign.Plan, res *assign.Result, backupP
 	}
 
 	d := dialog.NewCustom(T("widgets.summary.title"), T("widgets.summary.close"), content, win)
-	d.Resize(fyne.NewSize(640, 540))
+
+	// Size to content (fixed width, height clamped between the no-skipped
+	// floor and a ceiling that scrolls a long skipped list) instead of a
+	// flat box that leaves empty space when there's little to show.
+	size := d.MinSize()
+	h := size.Height
+	if h < summaryMinHeight {
+		h = summaryMinHeight
+	}
+	if h > summaryMaxHeight {
+		h = summaryMaxHeight
+	}
+	w := size.Width
+	if w < summaryWidth {
+		w = summaryWidth
+	}
+	d.Resize(fyne.NewSize(w, h))
 	d.Show()
 }

@@ -89,21 +89,29 @@ func showPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConf
 	table.SetColumnWidth(2, 100)
 	table.SetColumnWidth(3, 100)
 
-	top := container.NewVBox(summary, widget.NewSeparator())
+	// Cap the table to at most previewMaxRows rows worth of height instead
+	// of letting it stretch to fill whatever the dialog is given: a
+	// two-row result would otherwise sit above a large empty table area.
+	// Put it in a fixed-size GridWrap (rather than leaving it as a Border
+	// center) so it keeps this height even inside a container that would
+	// normally stretch it.
+	tableWrap := container.NewGridWrap(fyne.NewSize(previewTableWidth, previewTableHeight(len(rows))), table)
 
-	var bottom []fyne.CanvasObject
+	var items []fyne.CanvasObject
+	items = append(items, summary, widget.NewSeparator(), tableWrap)
+
 	if totalShortfall > 0 {
 		warn := widget.NewLabel(T("widgets.preview.warn_shortfall", totalShortfall))
 		warn.Wrapping = fyne.TextWrapWord
-		bottom = append(bottom, container.NewHBox(widget.NewIcon(theme.NewColoredResource(theme.WarningIcon(), theme.ColorNameWarning)), warn))
+		items = append(items, container.NewHBox(widget.NewIcon(theme.NewColoredResource(theme.WarningIcon(), theme.ColorNameWarning)), warn))
 	}
 	if len(plan.Unmapped) > 0 {
 		warn := widget.NewLabel(T("widgets.preview.warn_unmapped", len(plan.Unmapped)))
 		warn.Wrapping = fyne.TextWrapWord
-		bottom = append(bottom, container.NewHBox(widget.NewIcon(theme.NewColoredResource(theme.WarningIcon(), theme.ColorNameWarning)), warn))
+		items = append(items, container.NewHBox(widget.NewIcon(theme.NewColoredResource(theme.WarningIcon(), theme.ColorNameWarning)), warn))
 	}
 
-	content := container.NewBorder(top, container.NewVBox(bottom...), nil, nil, table)
+	content := container.NewVBox(items...)
 
 	d := dialog.NewCustomConfirm(T("widgets.preview.title"), confirmLabel, T("widgets.preview.cancel"), content, func(ok bool) {
 		if ok && onConfirm != nil {
@@ -116,6 +124,42 @@ func showPreview(win fyne.Window, plan *assign.Plan, confirmLabel string, onConf
 	if onClose != nil {
 		d.SetOnClosed(onClose)
 	}
-	d.Resize(fyne.NewSize(700, 520))
+
+	// Size to content instead of a flat box, with a floor so the dialog
+	// never gets uncomfortably small when there's almost nothing to show.
+	size := d.MinSize()
+	h := size.Height
+	if h < previewMinHeight {
+		h = previewMinHeight
+	}
+	w := size.Width
+	if w < previewWidth {
+		w = previewWidth
+	}
+	d.Resize(fyne.NewSize(w, h))
 	d.Show()
+}
+
+const (
+	previewTableWidth = 480
+	previewMaxRows    = 10
+	previewWidth      = 700
+	previewMinHeight  = 320
+)
+
+// previewTableHeight sizes the table to its header plus up to
+// previewMaxRows data rows, measured from real header/cell labels so it
+// tracks the current theme instead of a hand-picked pixel count.
+func previewTableHeight(rowCount int) float32 {
+	visible := rowCount
+	if visible > previewMaxRows {
+		visible = previewMaxRows
+	}
+	if visible < 1 {
+		visible = 1
+	}
+	headerHeight := widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}).MinSize().Height
+	rowHeight := widget.NewLabel("").MinSize().Height
+	sep := theme.Padding()
+	return headerHeight + sep + float32(visible)*(rowHeight+sep)
 }
