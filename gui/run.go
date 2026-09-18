@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
@@ -49,8 +50,13 @@ func (a *App) startRun(dryRun bool) {
 	a.runMu.Unlock()
 
 	a.setBusy(true)
+	a.resultStrip.Hide()
+	a.primaryReasonLabel.Hide()
+	a.progress.Show()
 	a.progress.Reset()
 	a.progress.SetIndeterminate(true)
+	a.refreshPage()
+	a.logDisclosure.setOpen(a, true) // also refreshes the page
 
 	settings := cloneSettings(a.current.Settings)
 
@@ -167,6 +173,8 @@ func (a *App) executeRun(in *pipeline.Inputs, plan *assign.Plan) {
 		})
 		doUI(func() {
 			defer a.finishRun()
+			a.progress.Hide()
+			a.refreshPage()
 			if err != nil {
 				a.errorf("assign failed: %v", err)
 				dialog.ShowError(err, a.win)
@@ -177,16 +185,15 @@ func (a *App) executeRun(in *pipeline.Inputs, plan *assign.Plan) {
 			}
 			a.logf("assigned %d, preserved %d, skipped %d, unmapped %d", len(rr.Result.Assigned), rr.Result.Preserved, len(rr.Result.Skipped), rr.Result.Unmapped)
 
+			a.showResultStrip(rr.Result, rr.BackupPath)
+			a.refreshPage()
+
 			widgets.ShowSummary(a.win, plan, rr.Result, rr.BackupPath, widgets.SummaryActions{
 				OpenFolder: a.openPackFolder,
-				ShowLog:    func() { a.tabs.SelectIndex(2) },
+				ShowLog:    func() { a.logDisclosure.setOpen(a, true) },
 				Undo:       a.restoreLatestBackup,
-				Review: func() {
-					a.reviewTable.SetAssignments(pipeline.Assignments(in))
-					a.tabs.SelectIndex(3)
-				},
+				Review:     a.openReviewDialog,
 			})
-			a.evaluate()
 		})
 	}()
 }
@@ -201,6 +208,10 @@ func (a *App) finishRun() {
 	a.runMu.Unlock()
 	a.setBusy(false)
 	a.progress.SetIndeterminate(false)
+	// Every path that ends the flow lands here; re-evaluate so the
+	// primary/undo buttons reflect the current checks instead of the
+	// blanket "enable everything" setBusy(false) used to do.
+	a.evaluate()
 }
 
 // isRunning reports whether a run/preview flow is currently in progress.
@@ -211,18 +222,18 @@ func (a *App) isRunning() bool {
 	return a.running
 }
 
-// setRunButtonsEnabled enables/disables just the Preview/Assign/Undo/Open
-// buttons. setBusy also covers the profile controls; prefer it for the
-// run/preview flow. Kept separate because tests and the undo flow only
-// need the run buttons.
+// setRunButtonsEnabled disables the primary/undo/result-strip buttons while
+// busy. Re-enabling them is NOT done here: it is decided by evaluate() (run
+// from finishRun once the flow ends), which knows whether the current
+// checks actually allow a run. setBusy also covers the profile controls;
+// prefer it for the run/preview flow. Kept separate because tests and the
+// undo flow only need the run buttons.
 func (a *App) setRunButtonsEnabled(enabled bool) {
-	for _, b := range []*widget.Button{a.previewBtn, a.assignBtn, a.undoBtn, a.openFolderBtn} {
-		if b == nil {
-			continue
-		}
-		if enabled {
-			b.Enable()
-		} else {
+	if enabled {
+		return
+	}
+	for _, b := range []*widget.Button{a.primaryBtn, a.undoBtn, a.overridesBtn, a.resultReviewBtn, a.resultOpenFolderBtn} {
+		if b != nil {
 			b.Disable()
 		}
 	}
@@ -230,9 +241,9 @@ func (a *App) setRunButtonsEnabled(enabled bool) {
 
 // setBusy disables (or re-enables) everything that could otherwise
 // interfere with the current run/preview flow: the run buttons plus the
-// profile Select and New/Rename/Delete buttons, since switching or
-// deleting the active profile mid-run would pull a.current (and the
-// backing files) out from under it.
+// profile Select and its "⋯" menu, since switching or deleting the active
+// profile mid-run would pull a.current (and the backing files) out from
+// under it.
 func (a *App) setBusy(busy bool) {
 	a.setRunButtonsEnabled(!busy)
 
@@ -243,14 +254,11 @@ func (a *App) setBusy(busy bool) {
 			a.profileSelect.Enable()
 		}
 	}
-	for _, b := range []*widget.Button{a.newProfileBtn, a.renameProfileBtn, a.deleteProfileBtn} {
-		if b == nil {
-			continue
-		}
+	if a.profileMenuBtn != nil {
 		if busy {
-			b.Disable()
+			a.profileMenuBtn.Disable()
 		} else {
-			b.Enable()
+			a.profileMenuBtn.Enable()
 		}
 	}
 }
@@ -298,10 +306,37 @@ func (a *App) restoreLatestBackup() {
 	}()
 }
 
-// loadCurrentMappings loads the profile's inputs (if needed) and fills the
-// review table from the config.xml currently on disk.
-func (a *App) loadCurrentMappings() {
+// showResultStrip fills and shows Card 3's post-run result strip, which
+// replaces the progress panel once a run finishes: counts plus Review/Open
+// folder/Undo buttons.
+func (a *App) showResultStrip(res *assign.Result, backupPath string) {
+	key := "gui.card3.result_no_backup"
+	if backupPath != "" {
+		key = "gui.card3.result_with_backup"
+	}
+	a.resultLabel.SetText(i18n.T(key, len(res.Assigned), res.Preserved, len(res.Skipped)))
+	if backupPath != "" {
+	} else {
+	}
+	a.resultStrip.Show()
+}
+
+// openReviewDialog opens the review table (thumbnail, player, nation,
+// group, Reroll) in a large dialog, auto-loading the current mappings from
+// config.xml if nothing is loaded yet — this replaces the old standalone
+// "Load current mappings" button/tab.
+func (a *App) openReviewDialog() {
 	if a.current == nil {
+		return
+	}
+	show := func() {
+		d := dialog.NewCustom(i18n.T("gui.card3.review_title"), i18n.T("common.close"), a.reviewTable, a.win)
+		d.Resize(fyne.NewSize(760, 560))
+		d.Show()
+	}
+	if in := a.getInputs(); in != nil {
+		a.reviewTable.SetAssignments(pipeline.Assignments(in))
+		show()
 		return
 	}
 	settings := cloneSettings(a.current.Settings)
@@ -315,6 +350,7 @@ func (a *App) loadCurrentMappings() {
 			}
 			a.setInputs(in)
 			a.reviewTable.SetAssignments(pipeline.Assignments(in))
+			show()
 		})
 	}()
 }
@@ -334,7 +370,7 @@ func (a *App) reviewImagePath(asn assign.Assignment) string {
 func (a *App) reviewReroll(p rtf.Player) (assign.Assignment, error) {
 	in := a.getInputs()
 	if in == nil {
-		return assign.Assignment{}, errors.New("no data loaded: use \"Load current mappings\" or run a preview/assign first")
+		return assign.Assignment{}, errors.New("no data loaded: open \"Review faces…\" or run a preview/assign first")
 	}
 	asn, err := pipeline.Reroll(in, p, a.backupBaseDir())
 	if err == nil {

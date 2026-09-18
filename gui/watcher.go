@@ -61,6 +61,14 @@ func (a *App) rearmWatcher() {
 	go a.watchLoop(w)
 }
 
+// watcherArmed reports whether the fsnotify watcher is currently active, so
+// Card 2's hint line can note that new exports are picked up automatically.
+func (a *App) watcherArmed() bool {
+	a.watchMu.Lock()
+	defer a.watchMu.Unlock()
+	return a.watcher != nil
+}
+
 // stopWatcher closes the watcher, if any (called on shutdown).
 func (a *App) stopWatcher() {
 	a.watchMu.Lock()

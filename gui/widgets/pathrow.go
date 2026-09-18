@@ -22,6 +22,8 @@ func newPathRow(label, placeholder string, onBrowse func() string, onOpen func()
 	}
 	pr.SetText = pr.setText
 	pr.Text = pr.text
+	pr.Enable = pr.enable
+	pr.Disable = pr.disable
 
 	entry.OnChanged = func(text string) {
 		if pr.guard {
@@ -51,10 +53,12 @@ func newPathRow(label, placeholder string, onBrowse func() string, onOpen func()
 				pr.onChanged(path)
 			}
 		})
+		pr.browseBtn = browseBtn
 		buttons = append(buttons, browseBtn)
 	}
 	if onOpen != nil {
 		openBtn := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), onOpen)
+		pr.openBtn = openBtn
 		buttons = append(buttons, openBtn)
 	}
 
@@ -71,4 +75,24 @@ func (pr *PathRow) setText(text string) {
 
 func (pr *PathRow) text() string {
 	return pr.entry.Text
+}
+
+func (pr *PathRow) enable() {
+	pr.entry.Enable()
+	if pr.browseBtn != nil {
+		pr.browseBtn.Enable()
+	}
+	if pr.openBtn != nil {
+		pr.openBtn.Enable()
+	}
+}
+
+func (pr *PathRow) disable() {
+	pr.entry.Disable()
+	if pr.browseBtn != nil {
+		pr.browseBtn.Disable()
+	}
+	if pr.openBtn != nil {
+		pr.openBtn.Disable()
+	}
 }

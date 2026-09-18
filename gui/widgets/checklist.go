@@ -50,6 +50,12 @@ func newChecklist() *Checklist {
 	return c
 }
 
+// StatusIcon returns a themed, status-tinted icon that stays readable in
+// both light and dark themes. Exported so callers can build their own
+// inline status lines (e.g. one row's icon+detail placed directly under the
+// field it describes) without going through the full Checklist widget.
+func StatusIcon(s Status) *widget.Icon { return statusIcon(s) }
+
 // statusIcon returns a themed, status-tinted icon that stays readable in
 // both light and dark themes.
 func statusIcon(s Status) *widget.Icon {

@@ -1,15 +1,18 @@
 package gui
 
 import (
+	"image/color"
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"fmnewgenfaces/gui/widgets"
+	"fmnewgenfaces/internal/brand"
 	"fmnewgenfaces/internal/core/ethnic"
 	"fmnewgenfaces/internal/core/fmversion"
 	"fmnewgenfaces/internal/core/pipeline"
@@ -17,24 +20,30 @@ import (
 	"fmnewgenfaces/internal/i18n"
 )
 
-// buildLayout constructs the whole window content. It does not touch
-// profiles or the filesystem; that happens in startup.go / profiles.go.
+// contentMaxWidth caps the width of the main content column so lines of
+// text and controls stay comfortably readable on a wide window; the column
+// still shrinks below this on a narrower one.
+const contentMaxWidth = 920
+
+// logMinHeight is how tall the log panel is once the bottom accordion is
+// expanded.
+const logMinHeight = 220
+
+// buildLayout constructs the whole window content: a one-row header, an
+// update-banner slot, and a single scrollable column of three cards (face
+// pack, newgen export, assign) followed by a collapsed log. It does not
+// touch profiles or the filesystem; that happens in startup.go / profiles.go.
 func (a *App) buildLayout() {
 	header := a.buildHeader()
 	a.bannerSlot = container.NewVBox()
 
-	a.tabs = container.NewAppTabs(
-		container.NewTabItemWithIcon(i18n.T("gui.tabs.setup"), theme.ListIcon(), a.buildSetupTab()),
-		container.NewTabItemWithIcon(i18n.T("gui.tabs.settings"), theme.SettingsIcon(), a.buildSettingsTab()),
-		container.NewTabItemWithIcon(i18n.T("gui.tabs.run"), theme.MediaPlayIcon(), a.buildRunTab()),
-		container.NewTabItemWithIcon(i18n.T("gui.tabs.review"), theme.VisibilityIcon(), a.buildReviewTab()),
-	)
-
-	top := container.NewVBox(header, a.bannerSlot)
-	a.win.SetContent(container.NewBorder(top, nil, nil, nil, a.tabs))
+	top := container.NewVBox(container.NewPadded(header), a.bannerSlot)
+	a.win.SetContent(container.NewBorder(top, nil, nil, nil, a.buildContent()))
 }
 
 func (a *App) buildHeader() fyne.CanvasObject {
+	appName := widget.NewLabelWithStyle(brand.AppName, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
 	a.profileSelect = widget.NewSelect(nil, func(name string) {
 		if a.loading {
 			return
@@ -43,20 +52,32 @@ func (a *App) buildHeader() fyne.CanvasObject {
 	})
 	a.profileSelect.PlaceHolder = i18n.T("gui.header.no_profiles")
 
-	a.newProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.new_profile"), theme.ContentAddIcon(), a.newProfile)
-	a.renameProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.rename"), theme.DocumentCreateIcon(), a.renameProfile)
-	a.deleteProfileBtn = widget.NewButtonWithIcon(i18n.T("gui.header.delete"), theme.DeleteIcon(), a.deleteProfile)
+	a.profileMenuBtn = widget.NewButtonWithIcon("", theme.MoreVerticalIcon(), nil)
+	a.profileMenuBtn.OnTapped = func() { a.showProfileMenu(a.profileMenuBtn) }
 
-	left := container.NewHBox(a.profileSelect, a.newProfileBtn, a.renameProfileBtn, a.deleteProfileBtn)
+	left := container.NewHBox(appName, a.profileSelect, a.profileMenuBtn)
 
-	helpBtn := widget.NewButtonWithIcon(i18n.T("gui.header.help"), theme.HelpIcon(), a.showHelp)
-	bugBtn := widget.NewButtonWithIcon(i18n.T("gui.header.report_bug"), theme.MailComposeIcon(), a.showBugReport)
+	helpBtn := widget.NewButtonWithIcon("", theme.HelpIcon(), a.showHelp)
 	settingsBtn := widget.NewButtonWithIcon("", theme.SettingsIcon(), nil)
 	settingsBtn.OnTapped = func() { a.showSettingsMenu(settingsBtn) }
 
-	right := container.NewHBox(helpBtn, bugBtn, settingsBtn)
+	right := container.NewHBox(helpBtn, settingsBtn)
 
 	return container.NewBorder(nil, nil, left, right)
+}
+
+// showProfileMenu opens the "⋯" popup next to the profile selector: create,
+// rename, delete, and re-running the first-run wizard.
+func (a *App) showProfileMenu(rel fyne.CanvasObject) {
+	items := []*fyne.MenuItem{
+		fyne.NewMenuItem(i18n.T("gui.header.new_profile"), a.newProfile),
+		fyne.NewMenuItem(i18n.T("gui.header.rename"), a.renameProfile),
+		fyne.NewMenuItem(i18n.T("gui.header.delete"), a.deleteProfile),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem(i18n.T("gui.header.rerun_wizard"), a.showWizard),
+	}
+	menu := fyne.NewMenu("", items...)
+	widget.ShowPopUpMenuAtRelativePosition(menu, a.win.Canvas(), fyne.NewPos(0, rel.Size().Height), rel)
 }
 
 func (a *App) showSettingsMenu(rel fyne.CanvasObject) {
@@ -79,8 +100,9 @@ func (a *App) showSettingsMenu(rel fyne.CanvasObject) {
 	langMenu.ChildMenu = fyne.NewMenu("", langItems...)
 
 	updateItem := fyne.NewMenuItem(i18n.T("gui.settings_menu.check_updates"), a.checkForUpdatesNow)
+	reportBugItem := fyne.NewMenuItem(i18n.T("gui.settings_menu.report_bug"), a.showBugReport)
 
-	menu := fyne.NewMenu("", themeMenu, langMenu, fyne.NewMenuItemSeparator(), updateItem)
+	menu := fyne.NewMenu("", themeMenu, langMenu, fyne.NewMenuItemSeparator(), updateItem, reportBugItem)
 	widget.ShowPopUpMenuAtRelativePosition(menu, a.win.Canvas(), fyne.NewPos(0, rel.Size().Height), rel)
 }
 
@@ -107,9 +129,24 @@ func (a *App) setLanguage(code string) {
 	dialog.ShowInformation(i18n.T("gui.settings_menu.language"), i18n.T("gui.settings_menu.language_restart"), a.win)
 }
 
-func (a *App) buildSetupTab() fyne.CanvasObject {
-	a.checklist = widgets.NewChecklist()
+// buildContent assembles the three cards and the bottom log accordion into
+// a single column, padded and capped to contentMaxWidth, inside a vertical
+// scroll.
+func (a *App) buildContent() fyne.CanvasObject {
+	column := container.NewVBox(
+		a.buildCard1(),
+		a.buildCard2(),
+		a.buildCard3(),
+		a.buildLogAccordion(),
+	)
+	padded := container.NewPadded(column)
+	centered := container.New(widgets.NewCenteredLayout(contentMaxWidth), padded)
+	return container.NewVScroll(centered)
+}
 
+// --- Card 1: face pack ---
+
+func (a *App) buildCard1() fyne.CanvasObject {
 	var packRow *widgets.PathRow
 	var packRowObj fyne.CanvasObject
 	packRowObj, packRow = widgets.NewPathRow(
@@ -119,22 +156,16 @@ func (a *App) buildSetupTab() fyne.CanvasObject {
 		func(v string) { a.onPackDirChanged(v) },
 	)
 	a.packRow = packRow
+	a.packStatusBox = container.NewVBox()
 
 	configRowObj, configRow := widgets.NewPathRow(
-		i18n.T("gui.setup.config_xml"), i18n.T("gui.setup.config_xml_placeholder"),
-		func() string { return pickFile(i18n.T("gui.setup.config_xml"), "xml") },
+		i18n.T("gui.setup.config_file"), i18n.T("gui.setup.config_xml_placeholder"),
+		func() string { return pickFile(i18n.T("gui.setup.config_heading"), "xml") },
 		nil,
 		func(v string) { a.onConfigChanged(v) },
 	)
 	a.configRow = configRow
-
-	rtfRowObj, rtfRow := widgets.NewPathRow(
-		i18n.T("gui.setup.rtf_path"), i18n.T("gui.setup.rtf_path_placeholder"),
-		func() string { return pickFile(i18n.T("gui.setup.rtf_path"), "rtf") },
-		func() { a.openRTFFolder() },
-		func(v string) { a.onRTFChanged(v) },
-	)
-	a.rtfRow = rtfRow
+	a.configStatusBox = container.NewVBox()
 
 	var versionOptions []string
 	for _, v := range fmversion.Known {
@@ -146,59 +177,82 @@ func (a *App) buildSetupTab() fyne.CanvasObject {
 		}
 		a.onVersionChanged(versionForDisplay(display))
 	})
-
+	a.versionStatusBox = container.NewVBox()
+	a.installStatusBox = container.NewVBox()
 	a.packTable = widgets.NewPackTable()
 
-	top := container.NewVBox(
-		a.checklist,
+	sectionLabel := func(text string) fyne.CanvasObject {
+		return widget.NewLabelWithStyle(text, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	}
+
+	advancedContent := container.NewVBox(
+		sectionLabel(i18n.T("gui.setup.fm_version")),
+		a.versionSelect,
+		a.versionStatusBox,
 		widget.NewSeparator(),
-		packRowObj,
+		sectionLabel(i18n.T("gui.setup.config_heading")),
 		configRowObj,
-		rtfRowObj,
-		container.NewBorder(nil, nil, widget.NewLabel(i18n.T("gui.setup.fm_version")), nil, a.versionSelect),
+		a.configStatusBox,
 		widget.NewSeparator(),
+		sectionLabel(i18n.T("gui.checklist.install_title")),
+		a.installStatusBox,
 	)
+	a.advancedDisclosure = a.newDisclosure(i18n.T("gui.card1.advanced"), advancedContent)
 
-	// The compact checklist, the three path rows and the version selector
-	// fit above the pack table at the default window height; the table is
-	// the Border's center and scrolls within whatever height remains.
-	return container.NewBorder(top, nil, nil, nil, a.packTable)
+	body := container.NewVBox(packRowObj, a.packStatusBox, a.advancedDisclosure.root())
+	return widget.NewCard(i18n.T("gui.card1.title"), i18n.T("gui.card1.subtitle"), body)
 }
 
-func versionForDisplay(display string) string {
-	for _, v := range fmversion.Known {
-		if v.Display() == display {
-			return v.Year
-		}
+// --- Card 2: newgen export ---
+
+func (a *App) buildCard2() fyne.CanvasObject {
+	rtfRowObj, rtfRow := widgets.NewPathRow(
+		i18n.T("gui.setup.rtf_path"), i18n.T("gui.setup.rtf_path_placeholder"),
+		func() string { return pickFile(i18n.T("gui.setup.rtf_path"), "rtf") },
+		func() { a.openRTFFolder() },
+		func(v string) { a.onRTFChanged(v) },
+	)
+	a.rtfRow = rtfRow
+	a.rtfStatusBox = container.NewVBox()
+
+	a.rtfHintLabel = widget.NewLabel(i18n.T("gui.card2.hint"))
+	a.rtfHintLabel.Wrapping = fyne.TextWrapWord
+	a.rtfHintLabel.Importance = widget.LowImportance
+
+	body := container.NewVBox(rtfRowObj, a.rtfStatusBox, a.rtfHintLabel)
+	return widget.NewCard(i18n.T("gui.card2.title"), i18n.T("gui.card2.subtitle"), body)
+}
+
+// setRTFHint updates the muted hint line under the RTF row, appending the
+// "watching folder" note while the fsnotify watcher is armed.
+func (a *App) setRTFHint(watching bool) {
+	if a.rtfHintLabel == nil {
+		return
 	}
-	return ""
-}
-
-func displayForVersion(year string) string {
-	if v, ok := fmversion.Lookup(year); ok {
-		return v.Display()
+	text := i18n.T("gui.card2.hint")
+	if watching {
+		text = text + " " + i18n.T("gui.card2.watching")
 	}
-	return ""
+	a.rtfHintLabel.SetText(text)
 }
 
-func (a *App) buildSettingsTab() fyne.CanvasObject {
+// --- Card 3: assign faces ---
+
+func (a *App) buildCard3() fyne.CanvasObject {
 	a.preserveCheck = widget.NewCheck(i18n.T("gui.settings.preserve"), func(bool) {
 		if a.loading {
 			return
 		}
 		a.settingsChanged()
 	})
-	preserveHelp := widget.NewLabel(i18n.T("gui.settings.preserve_help"))
-	preserveHelp.Wrapping = fyne.TextWrapWord
-
-	a.allowDupCheck = widget.NewCheck(i18n.T("gui.settings.allow_duplicates"), func(bool) {
+	// Checked means "avoid duplicates" (the safe option), the inverse of
+	// Settings.AllowDuplicates; settingsChanged/applyProfile invert it back.
+	a.allowDupCheck = widget.NewCheck(i18n.T("gui.card3.avoid_duplicates"), func(bool) {
 		if a.loading {
 			return
 		}
 		a.settingsChanged()
 	})
-	dupHelp := widget.NewLabel(i18n.T("gui.settings.allow_duplicates_help"))
-	dupHelp.Wrapping = fyne.TextWrapWord
 
 	a.overrideEditor = widgets.NewOverrideEditor(widgets.OverrideEditorConfig{
 		Get: func() map[string]string {
@@ -238,43 +292,93 @@ func (a *App) buildSettingsTab() fyne.CanvasObject {
 		Window: a.win,
 	})
 
-	top := container.NewVBox(
-		a.preserveCheck, preserveHelp,
-		widget.NewSeparator(),
-		a.allowDupCheck, dupHelp,
-		widget.NewSeparator(),
-		widget.NewLabelWithStyle(i18n.T("gui.settings.overrides_header"), fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-	)
-	return container.NewBorder(top, nil, nil, nil, a.overrideEditor)
-}
+	a.overridesBtn = widget.NewButton(i18n.T("gui.card3.overrides"), func() { a.showOverridesDialog() })
 
-func (a *App) buildRunTab() fyne.CanvasObject {
-	a.previewBtn = widget.NewButtonWithIcon(i18n.T("gui.run.preview"), theme.VisibilityIcon(), func() { a.startRun(true) })
-	a.assignBtn = widget.NewButtonWithIcon(i18n.T("gui.run.assign"), theme.MediaPlayIcon(), func() { a.startRun(false) })
-	a.assignBtn.Importance = widget.HighImportance
-	a.undoBtn = widget.NewButtonWithIcon(i18n.T("gui.run.undo"), theme.ContentUndoIcon(), a.restoreLatestBackup)
-	a.openFolderBtn = widget.NewButtonWithIcon(i18n.T("gui.run.open_folder"), theme.FolderOpenIcon(), a.openPackFolder)
-
-	buttons := container.NewHBox(a.previewBtn, a.assignBtn, a.undoBtn, a.openFolderBtn)
-
-	a.progress = widgets.NewProgressPanel()
-	logView := widgets.NewLogView(500)
-	a.setLogView(logView)
-
-	top := container.NewVBox(buttons, a.progress, widget.NewSeparator())
-	return container.NewBorder(top, nil, nil, nil, logView)
-}
-
-func (a *App) buildReviewTab() fyne.CanvasObject {
 	a.reviewTable = widgets.NewReviewTable(widgets.ReviewConfig{
 		ImagePath: a.reviewImagePath,
 		Reroll:    a.reviewReroll,
 		Window:    a.win,
 	})
 
-	loadBtn := widget.NewButton(i18n.T("gui.review.load_current"), a.loadCurrentMappings)
+	checksRow := container.NewBorder(nil, nil, nil, a.overridesBtn,
+		container.NewHBox(a.preserveCheck, a.allowDupCheck))
 
-	return container.NewBorder(loadBtn, nil, nil, nil, a.reviewTable)
+	a.primaryBtn = widget.NewButtonWithIcon(i18n.T("gui.card3.primary"), theme.MediaPlayIcon(), func() { a.startRun(false) })
+	a.primaryBtn.Importance = widget.HighImportance
+	a.undoBtn = widget.NewButtonWithIcon(i18n.T("gui.run.undo"), theme.ContentUndoIcon(), a.restoreLatestBackup)
+	a.undoBtn.Disable()
+
+	buttonRow := container.NewHBox(a.primaryBtn, a.undoBtn)
+
+	a.primaryReasonLabel = widget.NewLabel("")
+	a.primaryReasonLabel.Wrapping = fyne.TextWrapWord
+	a.primaryReasonLabel.Importance = widget.WarningImportance
+	a.primaryReasonLabel.Hide()
+
+	a.progress = widgets.NewProgressPanel()
+	a.progress.Hide()
+
+	a.resultLabel = widget.NewLabel("")
+	a.resultLabel.Wrapping = fyne.TextWrapWord
+	a.resultReviewBtn = widget.NewButtonWithIcon(i18n.T("gui.card3.review"), theme.VisibilityIcon(), func() { a.openReviewDialog() })
+	a.resultOpenFolderBtn = widget.NewButtonWithIcon(i18n.T("gui.run.open_folder"), theme.FolderOpenIcon(), a.openPackFolder)
+	a.resultStrip = container.NewVBox(
+		a.resultLabel,
+		container.NewHBox(a.resultReviewBtn, a.resultOpenFolderBtn),
+	)
+	a.resultStrip.Hide()
+
+	body := container.NewVBox(checksRow, buttonRow, a.primaryReasonLabel, a.progress, a.resultStrip)
+	return widget.NewCard(i18n.T("gui.card3.title"), i18n.T("gui.card3.subtitle"), body)
+}
+
+// showOverridesDialog opens the nation->ethnic override editor in a dialog;
+// it lives in Card 3 permanently but is only shown on demand.
+func (a *App) showOverridesDialog() {
+	a.overrideEditor.Refresh()
+	d := dialog.NewCustom(i18n.T("gui.card3.overrides_title"), i18n.T("common.close"), a.overrideEditor, a.win)
+	d.Resize(fyne.NewSize(480, 420))
+	d.Show()
+}
+
+// --- bottom: log accordion ---
+
+func (a *App) buildLogAccordion() fyne.CanvasObject {
+	logView := widgets.NewLogView(500)
+	a.setLogView(logView)
+
+	// Stacking the log view over an invisible rectangle with a fixed
+	// minimum size reserves logMinHeight for it once expanded, without
+	// forcing the log view's own (small) intrinsic min size on it.
+	minHeight := canvas.NewRectangle(color.Transparent)
+	minHeight.SetMinSize(fyne.NewSize(0, logMinHeight))
+	wrapped := container.NewStack(minHeight, logView)
+
+	a.logDisclosure = a.newDisclosure(i18n.T("gui.log.title"), wrapped)
+
+	if a.logTee != nil {
+		a.logTee.onError = func() {
+			doUI(func() { a.logDisclosure.setOpen(a, true) })
+		}
+	}
+
+	return a.logDisclosure.root()
+}
+
+func versionForDisplay(display string) string {
+	for _, v := range fmversion.Known {
+		if v.Display() == display {
+			return v.Year
+		}
+	}
+	return ""
+}
+
+func displayForVersion(year string) string {
+	if v, ok := fmversion.Lookup(year); ok {
+		return v.Display()
+	}
+	return ""
 }
 
 // openPackFolder opens the current pack directory in the OS file manager.
@@ -301,11 +405,13 @@ func (a *App) openRTFFolder() {
 func (a *App) showBanner(obj fyne.CanvasObject) {
 	a.bannerSlot.Objects = []fyne.CanvasObject{obj}
 	a.bannerSlot.Refresh()
+	a.refreshPage()
 }
 
 func (a *App) hideBanner() {
 	a.bannerSlot.Objects = nil
 	a.bannerSlot.Refresh()
+	a.refreshPage()
 }
 
 // knownEthnicCodes returns every nation code the default table knows, for

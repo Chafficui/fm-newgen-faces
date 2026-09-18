@@ -9,7 +9,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fsnotify/fsnotify"
@@ -23,8 +22,8 @@ import (
 )
 
 const (
-	defaultWindowWidth  = 1200
-	defaultWindowHeight = 820
+	defaultWindowWidth  = 1000
+	defaultWindowHeight = 760
 	autosaveDelay       = 500 * time.Millisecond
 )
 
@@ -52,7 +51,7 @@ type App struct {
 	logTee  *teeWriter
 	logView *widgets.LogView
 
-	// inputs is loaded on a background goroutine (startRun, loadCurrentMappings)
+	// inputs is loaded on a background goroutine (startRun, openReviewDialog)
 	// and cleared on the UI thread (applyProfile) while widgets.ReviewTable's
 	// own reroll goroutine reads it via reviewReroll, so every access goes
 	// through inputsMu/getInputs/setInputs rather than the field directly.
@@ -66,37 +65,46 @@ type App struct {
 	themeSetting string // "system", "light", "dark"
 
 	// header
-	profileSelect    *widget.Select
-	newProfileBtn    *widget.Button
-	renameProfileBtn *widget.Button
-	deleteProfileBtn *widget.Button
-	profiles         []*profile.Profile
-	bannerSlot       *fyne.Container
+	profileSelect  *widget.Select
+	profileMenuBtn *widget.Button
+	profiles       []*profile.Profile
+	bannerSlot     *fyne.Container
 
-	tabs *container.AppTabs
+	// card 1 – face pack
+	packRow            *widgets.PathRow
+	packStatusBox      *fyne.Container
+	configRow          *widgets.PathRow
+	configStatusBox    *fyne.Container
+	versionSelect      *widget.Select
+	versionStatusBox   *fyne.Container
+	installStatusBox   *fyne.Container
+	packTable          *widgets.PackTable
+	advancedDisclosure *disclosure
 
-	// setup tab
-	checklist     *widgets.Checklist
-	packRow       *widgets.PathRow
-	configRow     *widgets.PathRow
-	rtfRow        *widgets.PathRow
-	versionSelect *widget.Select
-	packTable     *widgets.PackTable
+	// card 2 – newgen export
+	rtfRow       *widgets.PathRow
+	rtfStatusBox *fyne.Container
+	rtfHintLabel *widget.Label
 
-	// settings tab
-	preserveCheck  *widget.Check
-	allowDupCheck  *widget.Check
-	overrideEditor *widgets.OverrideEditor
+	// card 3 – assign faces
+	preserveCheck       *widget.Check
+	allowDupCheck       *widget.Check // label "Avoid duplicate images"; inverted vs Settings.AllowDuplicates
+	overrideEditor      *widgets.OverrideEditor
+	overridesBtn        *widget.Button
+	primaryBtn          *widget.Button
+	undoBtn             *widget.Button
+	primaryReasonLabel  *widget.Label
+	progress            *widgets.ProgressPanel
+	resultStrip         *fyne.Container
+	resultLabel         *widget.Label
+	resultReviewBtn     *widget.Button
+	resultOpenFolderBtn *widget.Button
 
-	// run tab
-	previewBtn    *widget.Button
-	assignBtn     *widget.Button
-	undoBtn       *widget.Button
-	openFolderBtn *widget.Button
-	progress      *widgets.ProgressPanel
-
-	// review tab
+	// review dialog
 	reviewTable *widgets.ReviewTable
+
+	// log section (bottom of the page)
+	logDisclosure *disclosure
 
 	// evaluate() debounce/serialisation
 	evalMu    sync.Mutex

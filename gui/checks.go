@@ -15,6 +15,7 @@ import (
 	"fmnewgenfaces/internal/core/fmconfig"
 	"fmnewgenfaces/internal/core/fminstall"
 	"fmnewgenfaces/internal/core/fmversion"
+	"fmnewgenfaces/internal/core/pipeline"
 	"fmnewgenfaces/internal/core/profile"
 	"fmnewgenfaces/internal/core/rtf"
 	"fmnewgenfaces/internal/i18n"
@@ -67,6 +68,7 @@ func cloneSettings(s profile.Settings) profile.Settings {
 
 func (a *App) runEvaluate(gen uint64, settings profile.Settings) {
 	rows, pack := a.computeChecklist(settings)
+	hasBackup := a.hasBackupFor(settings.ConfigXML)
 
 	a.evalMu.Lock()
 	stale := gen != a.evalGen
@@ -76,9 +78,20 @@ func (a *App) runEvaluate(gen uint64, settings profile.Settings) {
 	}
 
 	doUI(func() {
-		a.checklist.SetRows(rows)
 		a.packTable.SetPack(pack)
+		a.applyChecklistToCards(rows, pack != nil, hasBackup, settings.PackDir)
 	})
+}
+
+// hasBackupFor reports whether config.xml has at least one backup, so the
+// Undo button can start disabled instead of only failing with a dialog once
+// tapped.
+func (a *App) hasBackupFor(configPath string) bool {
+	if configPath == "" {
+		return false
+	}
+	backups, err := fmconfig.ListBackups(fmconfig.BackupDirFor(a.backupBaseDir(), configPath))
+	return err == nil && len(backups) > 0
 }
 
 func versionForSettings(s profile.Settings) fmversion.Version {
@@ -242,9 +255,11 @@ func (a *App) checkRTF(settings profile.Settings, cfg *fmconfig.Config) widgets.
 	if len(res.UnmappedPlayers) > 0 {
 		row.Status = widgets.StatusWarn
 		row.Detail = i18n.T("gui.checklist.rtf_warn_unmapped", len(res.UnmappedPlayers))
+		row.Action = i18n.T("gui.checklist.action_resolve_now")
+		row.OnAction = a.actionResolveUnmapped
 	} else {
 		row.Status = widgets.StatusOK
-		row.Detail = i18n.T("gui.checklist.rtf_ok", len(res.Players), kept)
+		row.Detail = i18n.N("gui.checklist.rtf_ok", len(res.Players), kept)
 	}
 	if len(extra) > 0 {
 		row.Detail = row.Detail + " (" + strings.Join(extra, "; ") + ")"
@@ -389,6 +404,38 @@ func (a *App) actionInstallViewFilter(inst fminstall.Install) {
 
 func (a *App) actionShowExportHelp() {
 	a.showHelp()
+}
+
+// actionResolveUnmapped loads the current RTF export and, if it has any
+// nations the resolver doesn't recognise, opens the same resolver dialog
+// startRun would show, without going through a full preview/assign. Saving
+// a selection re-evaluates so the RTF status line updates immediately.
+func (a *App) actionResolveUnmapped() {
+	if a.current == nil {
+		return
+	}
+	settings := cloneSettings(a.current.Settings)
+	go func() {
+		in, err := pipeline.Load(settings)
+		doUI(func() {
+			if err != nil {
+				a.errorf("load failed: %v", err)
+				dialog.ShowError(err, a.win)
+				return
+			}
+			if len(in.RTF.UnmappedPlayers) == 0 {
+				a.evaluate()
+				return
+			}
+			widgets.ShowUnmappedResolver(a.win, in.RTF.Unmapped, ethnic.Names(),
+				func(sel map[string]string) {
+					a.applyUnmappedOverrides(in, sel)
+					a.evaluate()
+				},
+				func() {},
+			)
+		})
+	}()
 }
 
 // adoptRTFPath stores an auto-detected RTF path in the current profile and

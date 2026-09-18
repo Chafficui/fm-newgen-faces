@@ -70,7 +70,9 @@ func (a *App) applyProfile(p *profile.Profile) {
 	a.versionSelect.SetSelected(disp)
 
 	a.preserveCheck.SetChecked(p.Settings.Preserve)
-	a.allowDupCheck.SetChecked(p.Settings.AllowDuplicates)
+	// allowDupCheck's label is "Avoid duplicate images": checked means
+	// AllowDuplicates == false, the inverse of the stored setting.
+	a.allowDupCheck.SetChecked(!p.Settings.AllowDuplicates)
 
 	if a.overrideEditor != nil {
 		a.overrideEditor.Refresh()
@@ -78,6 +80,10 @@ func (a *App) applyProfile(p *profile.Profile) {
 	if a.reviewTable != nil {
 		a.reviewTable.SetAssignments(nil)
 	}
+	a.resultStrip.Hide()
+	a.progress.Hide()
+	a.primaryReasonLabel.Hide()
+	a.refreshPage()
 }
 
 // settingsChanged writes every UI field back into a.current.Settings,
@@ -95,7 +101,9 @@ func (a *App) settingsChanged() {
 		}
 	}
 	a.current.Settings.Preserve = a.preserveCheck.Checked
-	a.current.Settings.AllowDuplicates = a.allowDupCheck.Checked
+	// allowDupCheck reads "Avoid duplicate images": checked -> avoid
+	// duplicates -> AllowDuplicates = false.
+	a.current.Settings.AllowDuplicates = !a.allowDupCheck.Checked
 
 	a.autosaver.Trigger(a.current)
 	a.evaluate()

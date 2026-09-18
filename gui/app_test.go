@@ -238,6 +238,21 @@ func TestStartRunNoopWhileRunning(t *testing.T) {
 	}
 }
 
+// TestErrorLogAutoExpandsLogSection covers the bottom Log section's one bit
+// of built-in behaviour: logging an ERROR-level line expands it even if the
+// user never touched it, so a failure is never silently sitting collapsed.
+func TestErrorLogAutoExpandsLogSection(t *testing.T) {
+	a := newTestApp(t)
+
+	if a.logDisclosure.open {
+		t.Fatalf("expected the log section to start collapsed")
+	}
+
+	a.errorf("boom")
+
+	waitUntil(t, 2*time.Second, func() bool { return a.logDisclosure.open })
+}
+
 // TestReviewRerollErrorsWhenNoInputs is finding 2's error path: reviewReroll
 // must return an error, not panic, when no inputs are loaded.
 func TestReviewRerollErrorsWhenNoInputs(t *testing.T) {

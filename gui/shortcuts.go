@@ -21,16 +21,7 @@ func (a *App) setupShortcuts() {
 		}
 		a.startRun(false)
 	})
-	add(fyne.KeyP, func() {
-		if a.isRunning() {
-			return
-		}
-		a.startRun(true)
-	})
 	add(fyne.KeyO, a.actionBrowsePack)
-	add(fyne.Key1, func() { a.tabs.SelectIndex(0) })
-	add(fyne.Key2, func() { a.tabs.SelectIndex(1) })
-	add(fyne.Key3, func() { a.tabs.SelectIndex(2) })
-	add(fyne.Key4, func() { a.tabs.SelectIndex(3) })
+	add(fyne.KeyL, a.toggleLog)
 	add(fyne.KeyQ, a.onClose)
 }

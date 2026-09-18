@@ -12,6 +12,8 @@ import (
 	"fmnewgenfaces/gui/widgets"
 	"fmnewgenfaces/internal/core/ethnic"
 	"fmnewgenfaces/internal/core/pipeline"
+	"fmnewgenfaces/internal/core/profile"
+	"fmnewgenfaces/internal/i18n"
 )
 
 // TestScreenshots renders the application with Fyne's software painter and
@@ -27,13 +29,7 @@ func TestScreenshots(t *testing.T) {
 	}
 
 	a := newTestApp(t)
-	p := newTestProfile(t, a)
-	a.refreshProfileList()
-	a.applyProfile(p)
-	a.win.Resize(fyne.NewSize(1200, 820))
-	a.evaluateSync()
-	a.logf("Football Manager 2024: 2 file(s) installed, 0 already up to date")
-	a.logf("using newgen export found in the face pack folder: %s", p.Settings.RTFPath)
+	a.win.Resize(fyne.NewSize(1000, 760))
 
 	save := func(name string) {
 		t.Helper()
@@ -49,47 +45,88 @@ func TestScreenshots(t *testing.T) {
 		}
 	}
 
-	a.tabs.SelectIndex(0)
-	save("1-setup")
-	a.tabs.SelectIndex(1)
-	save("2-settings")
-	a.tabs.SelectIndex(2)
-	save("3-run")
+	// 1 – a brand new profile with no pack set: cards 2/3 dimmed, the
+	// friendly "choose the folder" message.
+	empty, err := profile.Create(a.store, "Empty Profile", "", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.refreshProfileList()
+	a.applyProfile(empty)
+	a.evaluateSync()
+	save("1-main-empty")
+
+	// 2 – a fully set-up profile: pack + RTF set, checks OK.
+	p := newTestProfile(t, a)
+	a.refreshProfileList()
+	a.applyProfile(p)
+	a.evaluateSync()
+	a.logf("Football Manager 2024: 2 file(s) installed, 0 already up to date")
+	a.logf("using newgen export found in the face pack folder: %s", p.Settings.RTFPath)
+	save("2-main-ready")
+
+	// 3 – Card 1's Advanced disclosure opened.
+	a.advancedDisclosure.setOpen(a, true)
+	save("3-advanced-open")
+	a.advancedDisclosure.setOpen(a, false)
 
 	in, err := pipeline.Load(cloneSettings(a.current.Settings))
 	if err != nil {
 		t.Fatal(err)
 	}
-	widgets.ShowUnmappedResolver(a.win, in.RTF.Unmapped, ethnic.Names(), func(map[string]string) {}, func() {})
-	save("4-unmapped-nations")
-	closeOverlays(a)
-
 	plan := pipeline.Plan(in)
-	widgets.ShowPreview(a.win, plan, "Assign faces", func() {}, func() {})
-	save("5-preview")
+
+	// 4 – the preview dialog (what startRun(false) shows before confirming).
+	widgets.ShowPreview(a.win, plan, i18n.T("gui.run.assign"), func() {}, func() {})
+	save("4-preview")
 	closeOverlays(a)
 
-	rr, err := pipeline.Run(in, plan, a.backupBaseDir(), nil)
+	// 5 – after executeRun: the inline result strip in Card 3.
+	a.setInputs(in)
+	a.runMu.Lock()
+	a.running = true
+	a.runMu.Unlock()
+	a.executeRun(in, plan)
+	waitUntil(t, 2*time.Second, func() bool { return !a.isRunning() })
+	closeOverlays(a) // the summary dialog also opens; hide it to see the strip underneath
+	save("5-running-or-result")
+
+	// 6 – the review dialog, auto-loaded from the run's inputs.
+	a.openReviewDialog()
+	time.Sleep(300 * time.Millisecond)
+	save("6-review-dialog")
+	closeOverlays(a)
+
+	// 7 – the unmapped-nations resolver.
+	in2, err := pipeline.Load(cloneSettings(a.current.Settings))
 	if err != nil {
 		t.Fatal(err)
 	}
-	widgets.ShowSummary(a.win, plan, rr.Result, rr.BackupPath, widgets.SummaryActions{
-		OpenFolder: func() {}, ShowLog: func() {}, Undo: func() {}, Review: func() {},
-	})
-	save("6-summary")
+	widgets.ShowUnmappedResolver(a.win, in2.RTF.Unmapped, ethnic.Names(), func(map[string]string) {}, func() {})
+	save("7-unmapped")
 	closeOverlays(a)
 
-	a.evaluateSync()
-	a.tabs.SelectIndex(3)
-	a.loadCurrentMappings()
-	time.Sleep(600 * time.Millisecond)
-	save("7-review")
-
-	a.tabs.SelectIndex(0)
-	save("8-setup-after-run")
-
+	// 8 – the first-run wizard.
 	a.showWizard()
-	save("9-wizard")
+	save("8-wizard")
+	closeOverlays(a)
+
+	// 9 – the log section, expanded (an error logged this way auto-expands
+	// it too — see TestErrorLogAutoExpandsLogSection — but the expand here
+	// is forced directly so the screenshot isn't racing that goroutine hop).
+	// The window is made taller first so the expanded log (below the fold
+	// at the normal 760px height) is actually in frame.
+	a.errorf("example error for the screenshot")
+	a.logDisclosure.setOpen(a, true)
+	a.win.Resize(fyne.NewSize(1000, 1000))
+	save("9-log-expanded")
+	a.toggleLog()
+	a.win.Resize(fyne.NewSize(1000, 760))
+
+	// 10 – the settings gear menu open (skipped if popups don't render in a
+	// software capture).
+	a.showSettingsMenu(a.profileSelect)
+	save("10-settings-menu-open")
 	closeOverlays(a)
 }
 

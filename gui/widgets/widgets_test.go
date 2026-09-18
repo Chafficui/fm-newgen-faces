@@ -236,3 +236,34 @@ func TestReviewTableSearchFilters(t *testing.T) {
 }
 
 var _ fyne.CanvasObject = (*reviewRow)(nil)
+
+func TestCenteredLayoutClampsAndCenters(t *testing.T) {
+	test.NewApp()
+
+	child := widget.NewLabel("hello")
+	l := newCenteredLayout(300)
+
+	// Wider than maxWidth: child is clamped to maxWidth and centred.
+	l.Layout([]fyne.CanvasObject{child}, fyne.NewSize(700, 100))
+	if child.Size().Width != 300 {
+		t.Fatalf("expected width clamped to 300, got %v", child.Size().Width)
+	}
+	if got, want := child.Position().X, float32(200); got != want {
+		t.Fatalf("expected x=%v to centre a 300-wide child in 700, got %v", want, got)
+	}
+
+	// Narrower than maxWidth: child shrinks to fill, x=0.
+	l.Layout([]fyne.CanvasObject{child}, fyne.NewSize(150, 100))
+	if child.Size().Width != 150 {
+		t.Fatalf("expected width to shrink to 150, got %v", child.Size().Width)
+	}
+	if child.Position().X != 0 {
+		t.Fatalf("expected x=0 when narrower than maxWidth, got %v", child.Position().X)
+	}
+
+	wide := widget.NewLabel("hello")
+	wide.Resize(fyne.NewSize(500, 40)) // Resize doesn't change a Label's intrinsic MinSize
+	if got, want := l.MinSize([]fyne.CanvasObject{wide}).Width, wide.MinSize().Width; got != want {
+		t.Fatalf("expected MinSize width to track the child's own min size (%v), got %v", want, got)
+	}
+}

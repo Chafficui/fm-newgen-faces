@@ -282,11 +282,25 @@ type PathRow struct {
 	// SetText sets the value WITHOUT firing onChanged.
 	SetText func(string)
 	Text    func() string
+	// Enable/Disable toggle the entry and its buttons together, so a whole
+	// row can be dimmed (e.g. while the face pack has not been set yet).
+	Enable  func()
+	Disable func()
 
 	// unexported
 	entry     *widget.Entry
+	browseBtn *widget.Button
+	openBtn   *widget.Button
 	guard     bool
 	timer     *time.Timer
 	debounce  time.Duration
 	onChanged func(string)
+}
+
+// NewCenteredLayout returns a fyne.Layout that centres a single child
+// horizontally, capping its width at maxWidth but letting it shrink below
+// that on a narrower window. Used to keep the main screen's content column
+// from stretching edge-to-edge on wide windows.
+func NewCenteredLayout(maxWidth float32) fyne.Layout {
+	return newCenteredLayout(maxWidth)
 }

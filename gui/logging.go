@@ -17,22 +17,29 @@ import (
 type teeWriter struct {
 	file *os.File
 	view *widgets.LogView
+	// onError, when set, is called (off the UI thread; callers should hop
+	// via doUI) every time an ERROR-level line is written, so the log
+	// accordion can auto-expand to show it.
+	onError func()
 }
 
 func (w *teeWriter) Write(p []byte) (int, error) {
 	if w.file != nil {
 		_, _ = w.file.Write(p)
 	}
+	line := strings.TrimRight(string(p), "\n")
+	level := widgets.LogInfo
+	switch {
+	case strings.Contains(line, "ERROR "):
+		level = widgets.LogError
+	case strings.Contains(line, "WARN "):
+		level = widgets.LogWarn
+	}
 	if w.view != nil {
-		line := strings.TrimRight(string(p), "\n")
-		level := widgets.LogInfo
-		switch {
-		case strings.Contains(line, "ERROR "):
-			level = widgets.LogError
-		case strings.Contains(line, "WARN "):
-			level = widgets.LogWarn
-		}
 		w.view.Append(level, line)
+	}
+	if level == widgets.LogError && w.onError != nil {
+		w.onError()
 	}
 	return len(p), nil
 }
