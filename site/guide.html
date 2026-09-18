@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Guide – FM NewGen Faces</title>
+<meta name="description" content="Step-by-step guide: install FM NewGen Faces, set up a face pack, export the newgen list from FM24, assign faces, and use profiles, overrides and backups.">
+<link rel="canonical" href="https://chafficui.github.io/fm-newgen-faces/guide.html">
+<link rel="icon" href="img/icon.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+
+<meta property="og:type" content="article">
+<meta property="og:title" content="User Guide – FM NewGen Faces">
+<meta property="og:description" content="Step-by-step guide: install, set up a face pack, export the newgen list from FM, assign faces, and use profiles, overrides and backups.">
+<meta property="og:url" content="https://chafficui.github.io/fm-newgen-faces/guide.html">
+<meta property="og:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="User Guide – FM NewGen Faces">
+<meta name="twitter:description" content="Step-by-step guide: install, set up a face pack, export the newgen list from FM, assign faces, and use profiles, overrides and backups.">
+<meta name="twitter:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://chafficui.github.io/fm-newgen-faces/" },
+    { "@type": "ListItem", "position": 2, "name": "Guide", "item": "https://chafficui.github.io/fm-newgen-faces/guide.html" }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap-wide bar">
+    <a class="brand" href="index.html">
+      <img src="img/icon.png" alt="" width="28" height="28" loading="lazy">
+      FM NewGen Faces
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="guide.html" aria-current="page">Guide</a>
+      <a href="faq.html">FAQ</a>
+      <a href="cli.html">CLI</a>
+      <a class="gh-link" href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="crumbs"><a href="index.html">Home</a> / Guide</p>
+  <div class="page-title-block">
+    <h1>User guide</h1>
+    <p class="lede">Everything from installing FM NewGen Faces to running it every new season: face pack setup, exporting the newgen list from Football Manager, assigning faces, reviewing them, and undoing a run if you need to.</p>
+  </div>
+
+  <nav class="toc" aria-label="On this page">
+    <h2>On this page</h2>
+    <ul>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#face-pack">Install a face pack</a></li>
+      <li><a href="#first-start">First start</a></li>
+      <li><a href="#export-newgen-list">Export the newgen list from FM</a></li>
+      <li><a href="#preview-assign">Preview and assign</a></li>
+      <li><a href="#show-faces-in-fm">Make FM show the faces</a></li>
+      <li><a href="#new-season">New season / new intake</a></li>
+      <li><a href="#review-reroll">Review and reroll</a></li>
+      <li><a href="#backups-undo">Undo and backups</a></li>
+      <li><a href="#nation-overrides">Nation overrides</a></li>
+      <li><a href="#profiles">Profiles</a></li>
+      <li><a href="#keyboard-shortcuts">Keyboard shortcuts</a></li>
+    </ul>
+  </nav>
+
+  <section id="requirements">
+    <h2>Requirements</h2>
+    <ul>
+      <li><strong>Football Manager</strong> FM20–FM24 (an FM24 save uses the newer <code>r-&lt;id&gt;</code> portrait naming; FM20–FM23 use the bare newgen ID – FM NewGen Faces handles both automatically from the version you pick).</li>
+      <li><strong>A newgen face pack</strong> that uses the 14 standard ethnic folders (a NewGAN-style pack). FM NewGen Faces does not generate faces itself – it assigns portraits from a pack you already have.</li>
+      <li><strong>Windows, macOS or Linux.</strong> No installer, no admin rights, no dependencies beyond what's listed under <a href="#install">Install</a> for your OS.</li>
+    </ul>
+  </section>
+
+  <section id="install">
+    <h2>Install</h2>
+    <p>Download the archive for your OS from the <a href="index.html">home page</a> or the <a href="https://github.com/Chafficui/fm-newgen-faces/releases" rel="noopener">releases page</a>, extract it anywhere, and run the app inside. It is a single executable – nothing else is installed on your system.</p>
+
+    <h3 id="install-windows">Windows</h3>
+    <p>Extract the zip and double-click <code>fm-newgen-faces.exe</code>. Because the app isn't code-signed with a paid certificate, Windows SmartScreen may show "Windows protected your PC" the first time. Click <strong>More info</strong>, then <strong>Run anyway</strong>. This only appears once per download.</p>
+
+    <h3 id="install-macos">macOS</h3>
+    <p>Extract the <code>.tar.gz</code>; inside is a single executable, <code>fm-newgen-faces</code>, which you can keep anywhere (e.g. a folder in Applications). It is not notarized by Apple, so the first double-click is blocked with "cannot be opened because the developer cannot be verified". <strong>Right-click (or Control-click) <code>fm-newgen-faces</code> → Open</strong>, then confirm <strong>Open</strong> in the dialog. After that it opens normally. Alternatively, in Terminal: <code>xattr -d com.apple.quarantine fm-newgen-faces</code>.</p>
+
+    <h3 id="install-linux">Linux</h3>
+    <p>Extract the <code>.tar.gz</code>, then make the binary executable and run it:</p>
+    <pre><code>tar xzf fm-newgen-faces-linux.tar.gz
+chmod +x fm-newgen-faces
+./fm-newgen-faces</code></pre>
+    <p>The GUI is built with <a href="https://fyne.io/" rel="noopener">Fyne</a> and needs a working OpenGL/X11 (or Wayland via XWayland) stack – the same graphics libraries most desktop Linux systems already have for any GTK/Qt app (X11, GL, and friends). If the window fails to open, install your distribution's equivalents of <code>libgl1</code>, <code>libx11-6</code>, <code>libxcursor1</code>, <code>libxrandr2</code>, <code>libxinerama1</code>, <code>libxi6</code> and <code>libxxf86vm1</code>. The <a href="cli.html">command line</a> works everywhere without a display.</p>
+  </section>
+
+  <section id="face-pack">
+    <h2>Install a face pack</h2>
+    <p>A face pack is a folder with 14 subfolders, one per ethnic group, full of portrait images:</p>
+    <pre><code>African, Asian, Caucasian, Central European, EECA, Italmed, MENA,
+MESA, SAMed, Scandinavian, Seasian, South American, SpanMed, YugoGreek</code></pre>
+    <p>Extract your face pack anywhere under your FM graphics folder, for example:</p>
+    <pre><code>Documents/Sports Interactive/Football Manager 2024/graphics/newgen-faces/</code></pre>
+    <p>Point FM NewGen Faces at that top-level folder (the one containing the 14 subfolders), not at one of the subfolders. The <strong>1 · Face pack</strong> card checks it live and reports per-folder image counts, missing or empty folders, ignored files and any nested folders before you run anything.</p>
+  </section>
+
+  <section id="first-start">
+    <h2>First start</h2>
+    <p>On first launch, FM NewGen Faces scans your system for Football Manager installations (Documents, OneDrive, and Steam Proton/Heroic prefixes on Linux) and creates one profile per installation it finds. A first-run wizard then walks you through picking your Football Manager install, choosing your face pack folder and exporting the newgen list, and links to the <a href="https://youtu.be/aHnrpfH--ic" rel="noopener">tutorial video</a> along the way.</p>
+    <figure>
+      <img class="shot" src="img/wizard.png" alt="First-run setup wizard, step 1 of 4, asking where Football Manager is installed" width="1000" height="760" loading="lazy">
+      <figcaption>The first-run wizard: welcome, face pack folder, export the newgen list, done. You can change anything afterwards in Setup and Settings, or re-run it from the profile menu.</figcaption>
+    </figure>
+    <p>You can always change the face pack folder, newgen export path, config.xml location or Football Manager version later from the main window or its <strong>Advanced</strong> section.</p>
+  </section>
+
+  <section id="export-newgen-list">
+    <h2>Export the newgen list from FM</h2>
+    <p>FM NewGen Faces reads your newgens from a text export you print from inside Football Manager. Do this once per run (e.g. once per season):</p>
+    <ol>
+      <li>In Football Manager, go to <strong>Scouting → Players in Range</strong>.</li>
+      <li>Import the view <strong>SCRIPT FACES player search</strong>.</li>
+      <li>Apply the filter <strong>is newgen search filter</strong>.</li>
+      <li>Select all players (<kbd>Ctrl</kbd>+<kbd>A</kbd>).</li>
+      <li>Print to a text file (<kbd>Ctrl</kbd>+<kbd>P</kbd>) and save it as <code>newgen.rtf</code> inside your face pack folder.</li>
+    </ol>
+    <p>FM NewGen Faces installs that view and filter into every Football Manager installation it finds (into <code>&lt;FM user folder&gt;/views</code> and <code>&lt;FM user folder&gt;/filters</code>), so they simply appear in FM's import list – you don't need to build them yourself. If your FM install is in a custom location, install them manually from the <strong>2 · Newgen export from FM</strong> card's "How to export" action, or the checklist's fix-it button.</p>
+    <div class="callout">Save the file as <code>newgen.rtf</code> directly inside the face pack folder. The app watches that folder and notices the new export automatically – no need to browse to it by hand.</div>
+    <p>The <strong>Advanced</strong> section under the face pack card lets you set the Football Manager version and the <code>config.xml</code> path by hand, and shows whether the view and filter were installed automatically or need a manual copy for a custom FM location:</p>
+    <figure>
+      <img class="shot" src="img/advanced.png" alt="Advanced section expanded, showing the Football Manager version dropdown, the config.xml path, and a custom-location warning for the FM view and filter" width="1000" height="760" loading="lazy">
+      <figcaption>Advanced: Football Manager version, config.xml path, and FM view/filter install status.</figcaption>
+    </figure>
+  </section>
+
+  <section id="preview-assign">
+    <h2>Preview and assign</h2>
+    <p>Once the face pack and the newgen export are both detected, the <strong>3 · Assign faces</strong> card lights up. Click <strong>Preview and assign</strong> to see the plan before anything is written:</p>
+    <figure>
+      <img class="shot" src="img/preview.png" alt="Preview dialog with New, Preserved and Unmapped totals, and a per-ethnic-group table of needed, available and shortfall counts" width="1000" height="760" loading="lazy">
+      <figcaption>The preview shows totals (new / preserved / unmapped) and, per ethnic group, how many faces are needed versus how many images are available in the pack, and any shortfall.</figcaption>
+    </figure>
+    <ul>
+      <li><strong>New</strong> – newgens that will get a face for the first time.</li>
+      <li><strong>Preserved</strong> – newgens that already have a face and will keep it (see below).</li>
+      <li><strong>Unmapped</strong> – players whose nation couldn't be resolved to an ethnic group; see <a href="#nation-overrides">nation overrides</a>.</li>
+      <li><strong>Shortfall</strong> – when a group needs more faces than the pack has available images for (with duplicates avoided).</li>
+    </ul>
+    <p>Two checkboxes control how the run behaves:</p>
+    <ul>
+      <li><strong>Preserve existing faces</strong> (on by default) keeps every newgen that already has a mapping in config.xml and only assigns faces to newgens that don't have one yet. Turn it off to reassign everyone, including players who already have a face.</li>
+      <li><strong>Avoid duplicate images</strong> excludes images already in use elsewhere in config.xml before drawing a face, so the same portrait isn't reused for two different players.</li>
+    </ul>
+    <p>Click <strong>Assign faces</strong> in the preview to write <code>config.xml</code>. The previous file is backed up first (see <a href="#backups-undo">Undo and backups</a>), and a summary shows how many players were assigned, kept and skipped:</p>
+    <figure>
+      <img class="shot" src="img/result.png" alt="Result summary after a run: Assigned 2, kept 0, skipped 0, with buttons to review faces or open the folder" width="1000" height="760" loading="lazy">
+      <figcaption>After a run: the summary line, plus shortcuts to review the assigned faces or open the face pack folder.</figcaption>
+    </figure>
+  </section>
+
+  <section id="show-faces-in-fm">
+    <h2>Make FM show the faces</h2>
+    <p>Football Manager caches portraits, so it won't pick up the new <code>config.xml</code> until you clear that cache. In FM, go to <strong>Preferences → Interface</strong> and choose <strong>Clear Cache</strong> and <strong>Reload Skin</strong> (or simply restart Football Manager). The new faces then show up in-game.</p>
+  </section>
+
+  <section id="new-season">
+    <h2>New season / new intake</h2>
+    <p>Whenever a new youth intake arrives, export the newgen list again (see <a href="#export-newgen-list">above</a>) and click <strong>Preview and assign</strong> once more. With <strong>Preserve existing faces</strong> on (the default), only the newly generated players are missing a face and get one – everyone who already had a portrait keeps it, so re-running is safe and fast every season.</p>
+  </section>
+
+  <section id="review-reroll">
+    <h2>Review and reroll</h2>
+    <p>Click <strong>Review faces…</strong> after a run to see every assigned face in a searchable table – name, ID, nation(s), ethnic group and the image used. Search by name, ID or nation, and click <strong>Reroll</strong> next to any player to swap in a different face from the same ethnic group if you don't like the one that was picked.</p>
+    <figure>
+      <img class="shot" src="img/review.png" alt="Review faces dialog listing each newgen with their ID, nation, ethnic group and assigned image, with a Reroll button per player" width="1000" height="760" loading="lazy">
+      <figcaption>The review table: search by name, ID or nation, then reroll individual faces.</figcaption>
+    </figure>
+  </section>
+
+  <section id="backups-undo">
+    <h2>Undo and backups</h2>
+    <p>Every time FM NewGen Faces writes <code>config.xml</code>, it first keeps a timestamped copy of the previous version. Click <strong>Undo last run</strong> in the app to restore the most recent backup for the current config.xml, or use <code>fm-newgen-faces restore</code> from the <a href="cli.html#restore">command line</a> to list or restore any backup, not just the latest one.</p>
+    <p>Backups (along with profiles, app state and the log file) live under the app's config directory:</p>
+    <table>
+      <thead><tr><th>OS</th><th>Location</th></tr></thead>
+      <tbody>
+        <tr><td>Linux</td><td><code>~/.config/fm-newgen-faces</code></td></tr>
+        <tr><td>macOS</td><td><code>~/Library/Application Support/fm-newgen-faces</code></td></tr>
+        <tr><td>Windows</td><td><code>%AppData%\fm-newgen-faces</code></td></tr>
+      </tbody>
+    </table>
+    <p>Backups are kept per config.xml path, under a <code>backups</code> subfolder there.</p>
+  </section>
+
+  <section id="nation-overrides">
+    <h2>Nation overrides</h2>
+    <p>FM NewGen Faces maps each player to one of the 14 ethnic groups using Football Manager's own ethnicity value together with the player's nation(s). If a nation code isn't in the built-in table, that player shows up as <strong>unmapped</strong> instead of blocking the whole run:</p>
+    <figure>
+      <img class="shot" src="img/unmapped.png" alt="Resolve unmapped nations dialog, letting you pick an ethnic group for each unknown nation code before saving" width="1000" height="760" loading="lazy">
+      <figcaption>The unmapped-nations resolver: pick a group for each unknown code and save. A single unknown nation never blocks the run.</figcaption>
+    </figure>
+    <p>Open <strong>Nation overrides…</strong> from the <strong>3 · Assign faces</strong> card to add or edit overrides at any time, or import/export them as a block of TOML, e.g.:</p>
+    <pre><code>[mapping_override]
+AFG = "MESA"
+ENG = "Caucasian"</code></pre>
+    <p>Overrides are saved per profile and apply to every future run for that profile.</p>
+  </section>
+
+  <section id="profiles">
+    <h2>Profiles</h2>
+    <p>A profile stores one face pack folder, newgen export path, config.xml path, Football Manager version, run options and overrides. FM NewGen Faces creates one profile per Football Manager installation it detects, and auto-selects the right one when you switch face pack folders. Use the profile switcher in the header to create, rename or delete profiles, or re-run the first-run wizard for the current one.</p>
+  </section>
+
+  <section id="keyboard-shortcuts">
+    <h2>Keyboard shortcuts</h2>
+    <table>
+      <thead><tr><th>Shortcut</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>R</kbd></td><td>Run (preview and assign faces)</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Choose the face pack folder</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>L</kbd></td><td>Toggle the log panel</td></tr>
+        <tr><td><kbd>Ctrl</kbd>+<kbd>Q</kbd></td><td>Quit</td></tr>
+      </tbody>
+    </table>
+    <p>On macOS, use <kbd>Cmd</kbd> in place of <kbd>Ctrl</kbd>.</p>
+  </section>
+
+  <section>
+    <p>Stuck on something? Check the <a href="faq.html">FAQ</a>, or see the <a href="cli.html">command-line reference</a> to script the whole pipeline.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap-wide">
+    <p><strong>FM NewGen Faces</strong> is free, open source software (GPL v3), not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of Sports Interactive / SEGA.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="faq.html">FAQ</a>
+      <a href="cli.html">CLI reference</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">GitHub</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/releases" rel="noopener">Releases</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/issues/new" rel="noopener">Report an issue</a>
+      <a href="https://youtu.be/aHnrpfH--ic" rel="noopener">Tutorial video</a>
+    </nav>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

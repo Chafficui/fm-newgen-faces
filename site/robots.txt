@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chafficui.github.io/fm-newgen-faces/sitemap.xml

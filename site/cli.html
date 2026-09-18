@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Command Line Reference – FM NewGen Faces</title>
+<meta name="description" content="Full CLI reference for FM NewGen Faces: assign, check, detect, restore, profiles and version, with flags and scripting examples.">
+<link rel="canonical" href="https://chafficui.github.io/fm-newgen-faces/cli.html">
+<link rel="icon" href="img/icon.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Command Line Reference – FM NewGen Faces">
+<meta property="og:description" content="Full CLI reference for FM NewGen Faces: assign, check, detect, restore, profiles and version, with flags and scripting examples.">
+<meta property="og:url" content="https://chafficui.github.io/fm-newgen-faces/cli.html">
+<meta property="og:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Command Line Reference – FM NewGen Faces">
+<meta name="twitter:description" content="Full CLI reference for FM NewGen Faces: assign, check, detect, restore, profiles and version, with flags and scripting examples.">
+<meta name="twitter:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://chafficui.github.io/fm-newgen-faces/" },
+    { "@type": "ListItem", "position": 2, "name": "CLI", "item": "https://chafficui.github.io/fm-newgen-faces/cli.html" }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap-wide bar">
+    <a class="brand" href="index.html">
+      <img src="img/icon.png" alt="" width="28" height="28" loading="lazy">
+      FM NewGen Faces
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="faq.html">FAQ</a>
+      <a href="cli.html" aria-current="page">CLI</a>
+      <a class="gh-link" href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="crumbs"><a href="index.html">Home</a> / CLI</p>
+  <div class="page-title-block">
+    <h1>Command line reference</h1>
+    <p class="lede">FM NewGen Faces has a full headless CLI alongside the GUI, so you can script a new-season run, wire it into a batch file, or fetch machine-readable output. Running the binary with no arguments launches the desktop app.</p>
+  </div>
+
+  <section>
+    <h2>Global flags</h2>
+    <p>These apply to every subcommand (place them before the subcommand name):</p>
+    <table>
+      <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>--config-dir &lt;dir&gt;</code></td><td>Profile and backup directory. Default: the OS user config directory (see <a href="guide.html#backups-undo">Undo and backups</a>).</td></tr>
+        <tr><td><code>--lang &lt;code&gt;</code></td><td>UI language code, e.g. <code>en</code>, <code>de</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <nav class="toc" aria-label="Commands">
+    <h2>Commands</h2>
+    <ul>
+      <li><a href="#gui">gui</a></li>
+      <li><a href="#version">version</a></li>
+      <li><a href="#profiles">profiles</a></li>
+      <li><a href="#detect">detect</a></li>
+      <li><a href="#check">check</a></li>
+      <li><a href="#assign">assign</a></li>
+      <li><a href="#restore">restore</a></li>
+    </ul>
+  </nav>
+
+  <section id="gui">
+    <div class="cmd">
+      <h3>fm-newgen-faces [gui]</h3>
+      <p>Launches the desktop application. This is also what running the binary with no subcommand does, so <code>fm-newgen-faces</code> and <code>fm-newgen-faces gui</code> are equivalent.</p>
+      <pre><code>fm-newgen-faces
+fm-newgen-faces gui</code></pre>
+    </div>
+  </section>
+
+  <section id="version">
+    <div class="cmd">
+      <h3>fm-newgen-faces version</h3>
+      <p>Prints the app name and version and exits.</p>
+      <pre><code>$ fm-newgen-faces version
+FM NewGen Faces 2.0.0</code></pre>
+    </div>
+  </section>
+
+  <section id="profiles">
+    <div class="cmd">
+      <h3>fm-newgen-faces profiles</h3>
+      <p>Lists all profiles (slug, name, FM version, face pack folder, game path). With no profiles yet, it says so.</p>
+      <pre><code>fm-newgen-faces profiles</code></pre>
+
+      <h3>fm-newgen-faces profiles create &lt;name&gt;</h3>
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody><tr><td><code>--game &lt;path&gt;</code></td><td>FM install path this profile belongs to.</td></tr></tbody>
+      </table>
+      <pre><code>fm-newgen-faces profiles create "FM 2024" --game "/home/alex/Documents/Sports Interactive/Football Manager 2024"</code></pre>
+
+      <h3>fm-newgen-faces profiles show &lt;slug&gt;</h3>
+      <p>Prints that profile's settings as JSON – handy for inspecting or diffing a profile in a script.</p>
+      <pre><code>fm-newgen-faces profiles show fm-2024</code></pre>
+
+      <h3>fm-newgen-faces profiles delete &lt;slug&gt;</h3>
+      <pre><code>fm-newgen-faces profiles delete fm-2024</code></pre>
+    </div>
+  </section>
+
+  <section id="detect">
+    <div class="cmd">
+      <h3>fm-newgen-faces detect</h3>
+      <p>Lists Football Manager installations found on this machine (name, version, base path, source: Documents, OneDrive, Steam Proton, Heroic or custom).</p>
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody><tr><td><code>--install-views</code></td><td>Also install the bundled SCRIPT FACES view and newgen filter into every installation found.</td></tr></tbody>
+      </table>
+      <pre><code># List installations
+fm-newgen-faces detect
+
+# List installations and (re)install the view/filter into all of them
+fm-newgen-faces detect --install-views</code></pre>
+    </div>
+  </section>
+
+  <section id="check">
+    <div class="cmd">
+      <h3>fm-newgen-faces check</h3>
+      <p>Validates the current profile's setup: face pack folder counts per ethnic group, missing folders, the RTF export's player/unmapped/malformed counts, and the existing config.xml mapping count. Exits with status 1 if any problem is found (useful for CI-style checks before a scheduled run).</p>
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>--profile &lt;name|slug&gt;</code></td><td>Profile to check. Default: last used, or the only profile.</td></tr>
+          <tr><td><code>--pack &lt;dir&gt;</code></td><td>Face pack folder (overrides the profile value).</td></tr>
+          <tr><td><code>--rtf &lt;file&gt;</code></td><td>Newgen export (RTF) path (overrides the profile value).</td></tr>
+          <tr><td><code>--config &lt;file&gt;</code></td><td>config.xml path (overrides the profile value).</td></tr>
+          <tr><td><code>--fm &lt;year&gt;</code></td><td>Football Manager version, e.g. <code>2024</code> (overrides the profile value).</td></tr>
+        </tbody>
+      </table>
+      <pre><code># Check a saved profile
+fm-newgen-faces check --profile "FM 2024"
+
+# Check a stand-alone setup with explicit paths
+fm-newgen-faces check --pack ./faces --rtf ./faces/newgen.rtf --config ./faces/config.xml --fm 2024</code></pre>
+    </div>
+  </section>
+
+  <section id="assign">
+    <div class="cmd">
+      <h3>fm-newgen-faces assign</h3>
+      <p>Builds the plan and, unless <code>--dry-run</code> is given, writes <code>config.xml</code> (backing up the previous file first, unless <code>--no-backup</code> is given). Exits with status 2 if any player was skipped.</p>
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>--profile &lt;name|slug&gt;</code></td><td>Profile to use. Default: last used, or the only profile.</td></tr>
+          <tr><td><code>--pack &lt;dir&gt;</code></td><td>Face pack folder (overrides the profile value).</td></tr>
+          <tr><td><code>--rtf &lt;file&gt;</code></td><td>Newgen export (RTF) path (overrides the profile value).</td></tr>
+          <tr><td><code>--config &lt;file&gt;</code></td><td>config.xml path (overrides the profile value).</td></tr>
+          <tr><td><code>--fm &lt;year&gt;</code></td><td>Football Manager version, e.g. <code>2024</code> (overrides the profile value).</td></tr>
+          <tr><td><code>--dry-run</code></td><td>Show the plan without writing anything.</td></tr>
+          <tr><td><code>--preserve</code> / <code>--no-preserve</code></td><td>Keep existing newgen mappings, or reassign every player including already-mapped ones. Default comes from the profile/settings.</td></tr>
+          <tr><td><code>--duplicates</code> / <code>--no-duplicates</code></td><td>Allow the same image for several players, or never reuse an image already mapped in config.xml. Default comes from the profile/settings.</td></tr>
+          <tr><td><code>--seed &lt;int&gt;</code></td><td>Random seed for reproducible runs (0 = random).</td></tr>
+          <tr><td><code>--no-backup</code></td><td>Do not keep a backup of the previous config.xml.</td></tr>
+          <tr><td><code>--json</code></td><td>Print the plan and result as one JSON document instead of tables.</td></tr>
+          <tr><td><code>--yes</code>, <code>-y</code></td><td>Skip the confirmation prompt (needed for non-interactive/scripted runs).</td></tr>
+          <tr><td><code>--override CODE=Group</code></td><td>Nation override for this run only, e.g. <code>--override AFG=MESA</code>. Repeatable.</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Examples</h4>
+      <p><strong>Scripting a new-season run</strong> (non-interactive, so it can run unattended or in a scheduled task):</p>
+      <pre><code>fm-newgen-faces assign --profile "FM 2024" --yes</code></pre>
+
+      <p><strong>JSON output</strong> for parsing the plan/result in another tool:</p>
+      <pre><code>fm-newgen-faces assign --profile "FM 2024" --dry-run --json</code></pre>
+
+      <p><strong>Stand-alone run</strong> with explicit paths, no profile:</p>
+      <pre><code>fm-newgen-faces assign \
+  --pack ./faces --rtf ./faces/newgen.rtf \
+  --config ./faces/config.xml --fm 2024 --yes</code></pre>
+
+      <p><strong>Resolve an unknown nation and reassign everyone</strong> in one go:</p>
+      <pre><code>fm-newgen-faces assign --profile "FM 2024" \
+  --override AFG=MESA --no-preserve --yes</code></pre>
+    </div>
+  </section>
+
+  <section id="restore">
+    <div class="cmd">
+      <h3>fm-newgen-faces restore</h3>
+      <p>Lists or restores timestamped config.xml backups. Requires at least one of <code>--list</code>, <code>--to</code> or <code>--latest</code>. The current config.xml is itself backed up to <code>&lt;config.xml&gt;.before-restore</code> before a restore.</p>
+      <table class="flag-table">
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>--profile &lt;name|slug&gt;</code></td><td>Profile whose config.xml to use.</td></tr>
+          <tr><td><code>--config &lt;file&gt;</code></td><td>config.xml path, used instead of <code>--profile</code>.</td></tr>
+          <tr><td><code>--list</code></td><td>List available backups for the resolved config.xml.</td></tr>
+          <tr><td><code>--to &lt;backup&gt;</code></td><td>Restore from this specific backup file.</td></tr>
+          <tr><td><code>--latest</code></td><td>Restore from the most recent backup.</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Examples</h4>
+      <pre><code># List backups for a profile
+fm-newgen-faces restore --profile "FM 2024" --list
+
+# Undo the last run
+fm-newgen-faces restore --profile "FM 2024" --latest
+
+# Restore a specific backup by path
+fm-newgen-faces restore --config ./faces/config.xml --to ./faces/config.xml.2026-09-01-120000</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Exit codes</h2>
+    <table>
+      <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Success.</td></tr>
+        <tr><td>1</td><td>An error occurred, or <code>check</code> found problems.</td></tr>
+        <tr><td>2</td><td>An <code>assign</code> run completed but one or more players were skipped.</td></tr>
+      </tbody>
+    </table>
+    <p>See the <a href="guide.html">user guide</a> for the GUI walkthrough, or the <a href="faq.html">FAQ</a> for troubleshooting.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap-wide">
+    <p><strong>FM NewGen Faces</strong> is free, open source software (GPL v3), not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of Sports Interactive / SEGA.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="faq.html">FAQ</a>
+      <a href="cli.html">CLI reference</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">GitHub</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/releases" rel="noopener">Releases</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/issues/new" rel="noopener">Report an issue</a>
+      <a href="https://youtu.be/aHnrpfH--ic" rel="noopener">Tutorial video</a>
+    </nav>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>

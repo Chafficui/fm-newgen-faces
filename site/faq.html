@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ &amp; Troubleshooting – FM NewGen Faces</title>
+<meta name="description" content="Fixes for faces not showing in FM, missing ethnic folders, unknown nations, RTF export issues, custom install paths, logs, privacy and version support.">
+<link rel="canonical" href="https://chafficui.github.io/fm-newgen-faces/faq.html">
+<link rel="icon" href="img/icon.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="FAQ &amp; Troubleshooting – FM NewGen Faces">
+<meta property="og:description" content="Fixes for faces not showing in FM, missing ethnic folders, unknown nations, RTF export issues, custom install paths, logs, privacy and version support.">
+<meta property="og:url" content="https://chafficui.github.io/fm-newgen-faces/faq.html">
+<meta property="og:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAQ &amp; Troubleshooting – FM NewGen Faces">
+<meta name="twitter:description" content="Fixes for faces not showing in FM, missing ethnic folders, unknown nations, RTF export issues, custom install paths, logs, privacy and version support.">
+<meta name="twitter:image" content="https://chafficui.github.io/fm-newgen-faces/img/main-ready.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://chafficui.github.io/fm-newgen-faces/" },
+    { "@type": "ListItem", "position": 2, "name": "FAQ", "item": "https://chafficui.github.io/fm-newgen-faces/faq.html" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "The faces don't show up in Football Manager after I ran it. What now?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Football Manager caches portraits, so it keeps showing the old (blank) faces until you clear that cache. In FM, go to Preferences → Interface and choose Clear Cache and Reload Skin, or simply restart Football Manager. Also double-check that your face pack folder (which contains config.xml) sits under the graphics folder of the same FM installation you exported the newgen list from, and that you picked the matching Football Manager version in FM NewGen Faces." }
+    },
+    {
+      "@type": "Question",
+      "name": "It says \"no ethnic subfolders found\" for my face pack folder. What's wrong?",
+      "acceptedAnswer": { "@type": "Answer", "text": "FM NewGen Faces expects the folder you point it at to directly contain the 14 ethnic subfolders: African, Asian, Caucasian, Central European, EECA, Italmed, MENA, MESA, SAMed, Scandinavian, Seasian, South American, SpanMed, YugoGreek. If your download extracted into an extra wrapper folder, or your pack nests those 14 folders one level deeper, point the face pack field at the folder that directly contains them, not its parent or a subfolder." }
+    },
+    {
+      "@type": "Question",
+      "name": "Some players show up as an unknown/unmapped nation. What do I do?",
+      "acceptedAnswer": { "@type": "Answer", "text": "A nation code with no entry in the built-in table shows those players as unmapped instead of blocking the run. Click \"Resolve now\" on the setup checklist (or \"Nation overrides…\" on the Assign faces card) to pick an ethnic group for each unknown code; it's saved as an override for that profile and applied on every future run. A single unknown nation never stops the rest of the run." }
+    },
+    {
+      "@type": "Question",
+      "name": "My newgen.rtf isn't detected, or only some players show up.",
+      "acceptedAnswer": { "@type": "Answer", "text": "The file must be saved as newgen.rtf directly inside the face pack folder – the app watches that folder and picks it up automatically; if you saved it elsewhere, browse to it manually. If only some players appear, check the setup checklist for a malformed-row count: FM's print-to-file export can produce a truncated last line, which FM NewGen Faces skips and reports rather than aborting the whole import. Re-exporting (Ctrl+A, then Ctrl+P) usually fixes a truncated file." }
+    },
+    {
+      "@type": "Question",
+      "name": "The app says it can't find my Football Manager installation.",
+      "acceptedAnswer": { "@type": "Answer", "text": "Automatic detection looks in your Documents folder (and OneDrive, or Steam Proton/Heroic prefixes on Linux). If your FM install lives somewhere else, choose \"Custom location\" in the first-run wizard, or set the face pack folder, config.xml path and Football Manager version by hand in the Advanced section – everything works the same, you just also need to install the bundled view and filter into that installation's views and filters folders yourself." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can config.xml live on a different drive than my face pack?",
+      "acceptedAnswer": { "@type": "Answer", "text": "config.xml has to sit inside the graphics folder of the Football Manager installation you want the faces to appear in, and the image paths it writes are relative to config.xml's own folder. The simplest and default setup keeps config.xml directly inside the face pack folder, which is itself under …/Football Manager 2024/graphics/. If you move config.xml elsewhere, keep the face pack in the same relative position to it, otherwise FM won't resolve the portrait paths. The app checks this for you: if config.xml and the face pack are on different drives, the setup check reports it before you run." }
+    },
+    {
+      "@type": "Question",
+      "name": "Where is the log file, and how do I report a bug?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Toggle the log panel in the app with Ctrl+L, or find fm-newgen-faces.log in the app's config directory (~/.config/fm-newgen-faces on Linux, ~/Library/Application Support/fm-newgen-faces on macOS, %AppData%\\fm-newgen-faces on Windows). To report a problem, use Report a bug… in the settings menu: it collects your profiles, the setup checklist and the log tail with your home directory and username redacted, and opens a prefilled GitHub issue you can review before submitting." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my data sent anywhere?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. FM NewGen Faces works entirely offline except for one thing: an optional check against api.github.com for a newer release. Nothing about your save, your face pack or your files is uploaded anywhere. A bug report is only created locally and only sent if you click Open GitHub issue yourself, with your home directory and OS username already redacted from it." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which Football Manager versions are supported?",
+      "acceptedAnswer": { "@type": "Answer", "text": "FM20 through FM24. FM24 introduced the r-<id> portrait naming inside config.xml; FM20–FM23 use the bare newgen ID. Pick the matching version in FM NewGen Faces (it's usually detected automatically from your face pack's path) and it writes the correct format for you." }
+    },
+    {
+      "@type": "Question",
+      "name": "I'm migrating from Jaqen NewGen Tool (1.x). Do I lose my profiles?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. FM NewGen Faces is the v2 rewrite of Jaqen NewGen Tool, and it migrates your legacy 1.x profiles automatically, once, the first time you start it – no manual export/import needed. The legacy tutorial video was recorded for the 1.x interface, so some screens look different, but the core workflow (face pack → newgen export → assign) is the same." }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap-wide bar">
+    <a class="brand" href="index.html">
+      <img src="img/icon.png" alt="" width="28" height="28" loading="lazy">
+      FM NewGen Faces
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="faq.html" aria-current="page">FAQ</a>
+      <a href="cli.html">CLI</a>
+      <a class="gh-link" href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="crumbs"><a href="index.html">Home</a> / FAQ</p>
+  <div class="page-title-block">
+    <h1>FAQ &amp; troubleshooting</h1>
+    <p class="lede">Answers to the most common setup and troubleshooting questions. For the full walkthrough, see the <a href="guide.html">user guide</a>.</p>
+  </div>
+
+  <details class="faq" id="faces-not-showing">
+    <summary>The faces don't show up in Football Manager after I ran it. What now?</summary>
+    <div class="faq-body">
+      <p>Football Manager caches portraits, so it keeps showing the old (blank) faces until you clear that cache. In FM, go to <strong>Preferences → Interface</strong> and choose <strong>Clear Cache</strong> and <strong>Reload Skin</strong>, or simply restart Football Manager.</p>
+      <p>Also double-check that your face pack folder (which contains <code>config.xml</code>) sits under the <code>graphics</code> folder of the <em>same</em> FM installation you exported the newgen list from, and that you picked the matching Football Manager version in FM NewGen Faces. See <a href="guide.html#show-faces-in-fm">Make FM show the faces</a>.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="no-ethnic-folders">
+    <summary>It says "no ethnic subfolders found" for my face pack folder. What's wrong?</summary>
+    <div class="faq-body">
+      <p>FM NewGen Faces expects the folder you point it at to directly contain the 14 ethnic subfolders: African, Asian, Caucasian, Central European, EECA, Italmed, MENA, MESA, SAMed, Scandinavian, Seasian, South American, SpanMed, YugoGreek.</p>
+      <p>If your download extracted into an extra wrapper folder, or your pack nests those 14 folders one level deeper, point the face pack field at the folder that directly contains them, not its parent or a subfolder. See <a href="guide.html#face-pack">Install a face pack</a>.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="unknown-nations">
+    <summary>Some players show up as an unknown/unmapped nation. What do I do?</summary>
+    <div class="faq-body">
+      <p>A nation code with no entry in the built-in table shows those players as unmapped instead of blocking the run. Click <strong>Resolve now</strong> on the setup checklist (or <strong>Nation overrides…</strong> on the Assign faces card) to pick an ethnic group for each unknown code; it's saved as an override for that profile and applied on every future run. A single unknown nation never stops the rest of the run.</p>
+      <p>See <a href="guide.html#nation-overrides">Nation overrides</a> for the TOML import/export format.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="rtf-not-detected">
+    <summary>My newgen.rtf isn't detected, or only some players show up.</summary>
+    <div class="faq-body">
+      <p>The file must be saved as <code>newgen.rtf</code> directly inside the face pack folder – the app watches that folder and picks it up automatically; if you saved it elsewhere, browse to it manually.</p>
+      <p>If only some players appear, check the setup checklist for a malformed-row count: FM's print-to-file export can produce a truncated last line, which FM NewGen Faces skips and reports rather than aborting the whole import. Re-exporting (<kbd>Ctrl</kbd>+<kbd>A</kbd>, then <kbd>Ctrl</kbd>+<kbd>P</kbd>) usually fixes a truncated file. See <a href="guide.html#export-newgen-list">Export the newgen list from FM</a>.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="fm-not-found">
+    <summary>The app says it can't find my Football Manager installation.</summary>
+    <div class="faq-body">
+      <p>Automatic detection looks in your Documents folder (and OneDrive, or Steam Proton/Heroic prefixes on Linux). If your FM install lives somewhere else, choose <strong>Custom location</strong> in the first-run wizard, or set the face pack folder, config.xml path and Football Manager version by hand in the Advanced section – everything works the same, you just also need to install the bundled view and filter into that installation's <code>views</code> and <code>filters</code> folders yourself.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="config-other-drive">
+    <summary>Can config.xml live on a different drive than my face pack?</summary>
+    <div class="faq-body">
+      <p><code>config.xml</code> has to sit inside the <code>graphics</code> folder of the Football Manager installation you want the faces to appear in, and the image paths it writes are relative to config.xml's own folder. The simplest and default setup keeps config.xml directly inside the face pack folder, which is itself under <code>…/Football Manager 2024/graphics/</code>. If you move config.xml elsewhere, keep the face pack in the same relative position to it, otherwise FM won't resolve the portrait paths. The app checks this for you: if config.xml and the face pack are on different drives, the setup check reports it before you run.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="report-bug">
+    <summary>Where is the log file, and how do I report a bug?</summary>
+    <div class="faq-body">
+      <p>Toggle the log panel in the app with <kbd>Ctrl</kbd>+<kbd>L</kbd>, or find <code>fm-newgen-faces.log</code> in the app's config directory (<code>~/.config/fm-newgen-faces</code> on Linux, <code>~/Library/Application Support/fm-newgen-faces</code> on macOS, <code>%AppData%\fm-newgen-faces</code> on Windows).</p>
+      <p>To report a problem, use <strong>Report a bug…</strong> in the settings menu: it collects your profiles, the setup checklist and the log tail with your home directory and username redacted, and opens a prefilled <a href="https://github.com/Chafficui/fm-newgen-faces/issues/new" rel="noopener">GitHub issue</a> you can review before submitting.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="data-privacy">
+    <summary>Is my data sent anywhere?</summary>
+    <div class="faq-body">
+      <p>No. FM NewGen Faces works entirely offline except for one thing: an optional check against <code>api.github.com</code> for a newer release. Nothing about your save, your face pack or your files is uploaded anywhere. A bug report is only created locally and only sent if you click <strong>Open GitHub issue</strong> yourself, with your home directory and OS username already redacted from it.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="fm-versions">
+    <summary>Which Football Manager versions are supported?</summary>
+    <div class="faq-body">
+      <p>FM20 through FM24. FM24 introduced the <code>r-&lt;id&gt;</code> portrait naming inside config.xml; FM20–FM23 use the bare newgen ID. Pick the matching version in FM NewGen Faces (it's usually detected automatically from your face pack's path) and it writes the correct format for you.</p>
+    </div>
+  </details>
+
+  <details class="faq" id="migrating-from-jaqen">
+    <summary>I'm migrating from Jaqen NewGen Tool (1.x). Do I lose my profiles?</summary>
+    <div class="faq-body">
+      <p>No. FM NewGen Faces is the v2 rewrite of Jaqen NewGen Tool, and it migrates your legacy 1.x profiles automatically, once, the first time you start it – no manual export/import needed. The <a href="https://youtu.be/aHnrpfH--ic" rel="noopener">tutorial video</a> was recorded for the 1.x interface, so some screens look different, but the core workflow (face pack → newgen export → assign) is the same.</p>
+    </div>
+  </details>
+
+  <section>
+    <p>Didn't find your answer? Read the <a href="guide.html">full guide</a> or <a href="https://github.com/Chafficui/fm-newgen-faces/issues/new" rel="noopener">open an issue</a> on GitHub.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap-wide">
+    <p><strong>FM NewGen Faces</strong> is free, open source software (GPL v3), not affiliated with Sports Interactive or SEGA. Football Manager is a trademark of Sports Interactive / SEGA.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="index.html">Home</a>
+      <a href="guide.html">Guide</a>
+      <a href="faq.html">FAQ</a>
+      <a href="cli.html">CLI reference</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces" rel="noopener">GitHub</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/releases" rel="noopener">Releases</a>
+      <a href="https://github.com/Chafficui/fm-newgen-faces/issues/new" rel="noopener">Report an issue</a>
+      <a href="https://youtu.be/aHnrpfH--ic" rel="noopener">Tutorial video</a>
+    </nav>
+  </div>
+</footer>
+<script src="js/main.js"></script>
+</body>
+</html>
