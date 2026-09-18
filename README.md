@@ -86,7 +86,7 @@ FM20 – FM24. FM24 uses the `r-<id>` portrait naming; earlier versions use the 
 
 ## Build from source
 
-Requires Go 1.24+ and, on Linux, the Fyne build dependencies (`libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libgtk-3-dev pkg-config`).
+Requires Go 1.25+ and, on Linux, the Fyne build dependencies (`libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libgtk-3-dev pkg-config`).
 
 ```bash
 git clone https://github.com/chafficui/fm-newgen-faces.git

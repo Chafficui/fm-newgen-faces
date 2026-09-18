@@ -1,8 +1,8 @@
 module fmnewgenfaces
 
-go 1.21.0
+go 1.25.0
 
-toolchain go1.23.2
+toolchain go1.25.1
 
 require (
 	fyne.io/fyne/v2 v2.6.3
