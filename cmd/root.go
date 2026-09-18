@@ -54,6 +54,11 @@ func newRootCmd() *cobra.Command {
 // Execute runs the root command and exits the process with the code carried
 // by an *exitError (see errors.go), or 1 for any other error.
 func Execute() {
+	// Cobra refuses to run when a Windows binary is started by double-click
+	// from Explorer ("This is a command line tool ..."). This IS a desktop
+	// application, so disable that check; the default action launches the GUI.
+	cobra.MousetrapHelpText = ""
+
 	err := newRootCmd().Execute()
 	if err == nil {
 		return

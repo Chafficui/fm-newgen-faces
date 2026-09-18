@@ -83,9 +83,14 @@ jobs:
         env:
           CGO_ENABLED: "1"
         run: |
-          EXT=""
-          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
-          go build -trimpath -ldflags "-s -w -X fmnewgenfaces/internal/brand.Version=${{ steps.v.outputs.version }}" -o fm-newgen-faces$EXT .
+          LD="-s -w -X fmnewgenfaces/internal/brand.Version=${{ steps.v.outputs.version }}"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            # GUI binary without a console window, plus a console build for the CLI.
+            go build -trimpath -ldflags "$LD -H windowsgui" -o fm-newgen-faces.exe .
+            go build -trimpath -ldflags "$LD" -o fm-newgen-faces-cli.exe .
+          else
+            go build -trimpath -ldflags "$LD" -o fm-newgen-faces .
+          fi
       - name: Package
         shell: bash
         run: |
@@ -95,7 +100,7 @@ jobs:
           # Versioned archive plus an unversioned copy, so the website can
           # link to releases/latest/download/fm-newgen-faces-<os>.<ext>.
           if [ "${{ matrix.goos }}" = "windows" ]; then
-            cp fm-newgen-faces.exe dist/$NAME/
+            cp fm-newgen-faces.exe fm-newgen-faces-cli.exe dist/$NAME/
             (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null && cp $NAME.zip fm-newgen-faces-windows.zip)
           else
             cp fm-newgen-faces dist/$NAME/

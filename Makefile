@@ -9,6 +9,10 @@ LDFLAGS := -s -w -X $(MODULE)/internal/brand.Version=$(VERSION)
 build: ## Build for the current platform
 	go build -trimpath -ldflags "$(LDFLAGS)" -o $(APP)$(EXT) .
 
+build-windows: ## Windows GUI (no console) and CLI binaries (run on Windows)
+	go build -trimpath -ldflags "$(LDFLAGS) -H windowsgui" -o $(APP).exe .
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $(APP)-cli.exe .
+
 run: build ## Build and launch the GUI
 	./$(APP)$(EXT)
 

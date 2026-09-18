@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1 – 2026-09-18
+
+### Fixed
+- Windows: double-clicking the executable showed "This is a command line tool" instead of starting the app.
+- Windows: the app no longer opens a console window behind it. The zip now also contains `fm-newgen-faces-cli.exe` for command-line use.
+- The user folder of newer Football Manager releases ("Football Manager 26") is recognised when scanning for installations.
+- Release archives also carry unversioned names so the website can link to the latest download.
+
 ## 2.0.0 – 2026-09-18
 
 Rebranded from *Jaqen NewGen Tool* to **FM NewGen Faces** and rewritten around a headless core.

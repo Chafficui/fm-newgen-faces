@@ -48,6 +48,8 @@ Football Manager generates "newgens" (regens) with blank faces. FM NewGen Faces 
 
 ## Command line
 
+On Windows use `fm-newgen-faces-cli.exe` (the GUI binary has no console). On macOS and Linux the same binary does both.
+
 ```
 fm-newgen-faces                 # launches the GUI
 fm-newgen-faces check           # validate the current profile's setup
