@@ -18,7 +18,7 @@ const (
 	LegacyConfigDirName = "jaqen"
 
 	RepoOwner   = "chafficui"
-	RepoName    = "jaqen-newgen-tool"
+	RepoName    = "fm-newgen-faces"
 	RepoURL     = "https://github.com/" + RepoOwner + "/" + RepoName
 	ReleasesURL = RepoURL + "/releases"
 	IssuesURL   = RepoURL + "/issues/new"

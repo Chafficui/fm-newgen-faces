@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 – unreleased
+## 2.0.0 – 2026-09-18
 
 Rebranded from *Jaqen NewGen Tool* to **FM NewGen Faces** and rewritten around a headless core.
 

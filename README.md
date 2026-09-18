@@ -7,10 +7,10 @@
 Free, open source, cross-platform (Windows · macOS · Linux). Works with any newgen face pack that uses the standard 14 ethnic folders (NewGAN-style packs).
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/chafficui/jaqen-newgen-tool?label=download)](https://github.com/chafficui/jaqen-newgen-tool/releases/latest)
-[![CI](https://github.com/chafficui/jaqen-newgen-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/chafficui/jaqen-newgen-tool/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/chafficui/fm-newgen-faces?label=download)](https://github.com/chafficui/fm-newgen-faces/releases/latest)
+[![CI](https://github.com/chafficui/fm-newgen-faces/actions/workflows/ci.yml/badge.svg)](https://github.com/chafficui/fm-newgen-faces/actions/workflows/ci.yml)
 
-[Download](https://github.com/chafficui/jaqen-newgen-tool/releases/latest) · [Tutorial video](https://youtu.be/aHnrpfH--ic) · [Report a problem](https://github.com/chafficui/jaqen-newgen-tool/issues)
+[Download](https://github.com/chafficui/fm-newgen-faces/releases/latest) · [Tutorial video](https://youtu.be/aHnrpfH--ic) · [Report a problem](https://github.com/chafficui/fm-newgen-faces/issues)
 
 </div>
 
@@ -86,8 +86,8 @@ FM20 – FM24 and FM26. FM24 and later use the `r-<id>` portrait naming; earlier
 Requires Go 1.24+ and, on Linux, the Fyne build dependencies (`libgl1-mesa-dev libx11-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libgtk-3-dev pkg-config`).
 
 ```bash
-git clone https://github.com/chafficui/jaqen-newgen-tool.git
-cd jaqen-newgen-tool
+git clone https://github.com/chafficui/fm-newgen-faces.git
+cd fm-newgen-faces
 make build     # → ./fm-newgen-faces
 make check     # gofmt, vet, tests
 ```
