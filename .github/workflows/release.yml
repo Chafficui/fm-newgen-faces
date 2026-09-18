@@ -129,4 +129,4 @@ jobs:
           name: FM NewGen Faces ${{ steps.v.outputs.version }}
           files: |
             dist/fm-newgen-faces-*.${{ matrix.archive }}
-          generate_release_notes: true
+          generate_release_notes: ${{ matrix.goos == 'linux' }}
