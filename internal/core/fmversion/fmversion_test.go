@@ -29,8 +29,11 @@ func TestFromPath(t *testing.T) {
 }
 
 func TestLookup(t *testing.T) {
-	if v, ok := Lookup("fm26"); !ok || v.Year != "2026" {
-		t.Errorf("Lookup(fm26) = %+v %v", v, ok)
+	if v, ok := Lookup("fm24"); !ok || v.Year != "2024" {
+		t.Errorf("Lookup(fm24) = %+v %v", v, ok)
+	}
+	if _, ok := Lookup("2026"); ok {
+		t.Error("FM26 is not a supported version and must not be listed")
 	}
 	if _, ok := Lookup("2025"); ok {
 		t.Error("FM 2025 was never released and must not be listed")

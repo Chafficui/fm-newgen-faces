@@ -71,7 +71,7 @@ ENG = "Caucasian"
 
 ## Supported Football Manager versions
 
-FM20 – FM24 and FM26. FM24 and later use the `r-<id>` portrait naming; earlier versions use the bare id. If a future release changes the naming, it is a one-line change in `internal/core/fmversion`.
+FM20 – FM24. FM24 uses the `r-<id>` portrait naming; earlier versions use the bare id. Adding a version is a one-line change in `internal/core/fmversion`.
 
 ## Where files live
 

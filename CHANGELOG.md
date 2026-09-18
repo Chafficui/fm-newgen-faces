@@ -31,7 +31,7 @@ Rebranded from *Jaqen NewGen Tool* to **FM NewGen Faces** and rewritten around a
 - Overrides leaked across profiles and lowercase keys were ignored.
 - Relative image paths were computed from the XML file instead of its directory; backslashes on Windows.
 - The last image of every folder could never be picked.
-- FM 2025/2026 installs were detected but silently ignored.
+- An FM version detected from the folder path was silently ignored when it was not in the dropdown.
 - No backup before overwriting config.xml; file handle not closed; missing XML declaration.
 - Bug reports leaked the OS username.
 - Profile names were not validated.
