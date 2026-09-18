@@ -108,7 +108,7 @@ func (a *App) showSettingsMenu(rel fyne.CanvasObject) {
 
 func (a *App) themeMenuItem(setting, label string) *fyne.MenuItem {
 	item := fyne.NewMenuItem(label, func() { a.setTheme(setting) })
-	item.Checked = a.themeSetting == setting || (a.themeSetting == "" && setting == "system")
+	item.Checked = a.themeSetting == setting || (a.themeSetting == "" && setting == "light")
 	return item
 }
 
@@ -217,7 +217,9 @@ func (a *App) buildCard2() fyne.CanvasObject {
 
 	a.rtfHintLabel = widget.NewLabel(i18n.T("gui.card2.hint"))
 	a.rtfHintLabel.Wrapping = fyne.TextWrapWord
-	a.rtfHintLabel.Importance = widget.LowImportance
+	// Italic, normal contrast: the disabled colour used by LowImportance is
+	// unreadable on the light theme.
+	a.rtfHintLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	body := container.NewVBox(rtfRowObj, a.rtfStatusBox, a.rtfHintLabel)
 	return widget.NewCard(i18n.T("gui.card2.title"), i18n.T("gui.card2.subtitle"), body)

@@ -14,18 +14,18 @@ type variantTheme struct {
 	variant fyne.ThemeVariant
 }
 
-// newTheme returns a theme for the given setting ("system", "light", "dark").
-// Unknown values (including "system"/"") delegate to the default theme,
-// which follows the OS preference.
+// newTheme returns a theme for the given setting ("light", "dark", "system").
+// Light is the default for a fresh install (an empty setting); "system"
+// follows the OS preference.
 func newTheme(setting string) fyne.Theme {
 	base := theme.DefaultTheme()
 	switch setting {
-	case "light":
-		return &variantTheme{Theme: base, variant: theme.VariantLight}
 	case "dark":
 		return &variantTheme{Theme: base, variant: theme.VariantDark}
-	default:
+	case "system":
 		return base
+	default:
+		return &variantTheme{Theme: base, variant: theme.VariantLight}
 	}
 }
 
