@@ -58,6 +58,22 @@ func TestScreenshots(t *testing.T) {
 
 	// 2 – a fully set-up profile: pack + RTF set, checks OK.
 	p := newTestProfile(t, a)
+	// FM_NEWGEN_SCREENSHOTS_HOME makes the paths in the pictures look like a
+	// real installation instead of a temp dir (used for the website).
+	if home := os.Getenv("FM_NEWGEN_SCREENSHOTS_HOME"); home != "" {
+		pack := filepath.Join(home, "Documents", "Sports Interactive", "Football Manager 2024", "graphics", "newgen-faces")
+		if err := os.MkdirAll(pack, 0o755); err != nil {
+			t.Fatal(err)
+		}
+		copyDir(t, p.Settings.PackDir, pack)
+		p.Settings.PackDir = pack
+		p.Settings.ConfigXML = filepath.Join(pack, "config.xml")
+		p.Settings.RTFPath = filepath.Join(pack, "newgen.rtf")
+		if err := a.store.Save(p); err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { os.RemoveAll(filepath.Join(home, "Documents")) })
+	}
 	a.refreshProfileList()
 	a.applyProfile(p)
 	a.evaluateSync()
