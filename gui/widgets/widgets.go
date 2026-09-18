@@ -47,10 +47,16 @@ type ChecklistRow struct {
 
 // Checklist renders rows with a status icon, title, detail and optional action.
 type Checklist struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
-	rows []ChecklistRow
-	box  *fyne.Container
+	rows    []ChecklistRow
+	box     *fyne.Container
+	content fyne.CanvasObject
+}
+
+// CreateRenderer implements fyne.Widget.
+func (c *Checklist) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(c.content)
 }
 
 // NewChecklist creates an empty checklist.
@@ -64,11 +70,17 @@ func (c *Checklist) AllOK() bool { return c.allOK() }
 
 // PackTable shows per-ethnic folder status for a scanned pack.
 type PackTable struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
-	table *widget.Table
-	total *widget.Label
-	rows  []packTableRow
+	table   *widget.Table
+	total   *widget.Label
+	rows    []packTableRow
+	content fyne.CanvasObject
+}
+
+// CreateRenderer implements fyne.Widget.
+func (t *PackTable) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(t.content)
 }
 
 // NewPackTable creates the table (columns: group, status, images, note).
@@ -112,10 +124,16 @@ func ShowUnmappedResolver(win fyne.Window, counts map[string]int, ethnicNames []
 // (autocomplete over knownCodes), showing the default for each code, plus
 // import/export of a TOML "[mapping_override]" block via callbacks.
 type OverrideEditor struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
-	cfg  OverrideEditorConfig
-	list *fyne.Container
+	cfg     OverrideEditorConfig
+	list    *fyne.Container
+	content fyne.CanvasObject
+}
+
+// CreateRenderer implements fyne.Widget.
+func (e *OverrideEditor) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(e.content)
 }
 
 // OverrideEditorConfig wires the editor to its owner.
@@ -141,7 +159,7 @@ func (e *OverrideEditor) Refresh() { e.refresh() }
 // ReviewTable lists assignments with a thumbnail, player, nation, group and
 // a Reroll button; a search box filters by name/ID/nation.
 type ReviewTable struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
 	cfg     ReviewConfig
 	search  *widget.Entry
@@ -150,6 +168,17 @@ type ReviewTable struct {
 	visible []assign.Assignment
 	thumbMu sync.Mutex
 	thumbs  map[string]fyne.Resource
+	// renderMu serializes canvas.Image mutation/decode across rows: each
+	// thumbnail finishes loading on its own goroutine (via fyne.Do), and
+	// without this Fyne's decode path can be entered concurrently for
+	// different rows, which it is not designed to tolerate.
+	renderMu sync.Mutex
+	content  fyne.CanvasObject
+}
+
+// CreateRenderer implements fyne.Widget.
+func (t *ReviewTable) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(t.content)
 }
 
 // ReviewConfig wires the table.
@@ -178,7 +207,7 @@ const (
 
 // LogView is a scrolling, bounded, colour-coded log panel.
 type LogView struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
 	mu       sync.Mutex
 	rich     *widget.RichText
@@ -186,6 +215,9 @@ type LogView struct {
 	maxLines int
 	lines    int
 }
+
+// CreateRenderer implements fyne.Widget.
+func (l *LogView) CreateRenderer() fyne.WidgetRenderer { return widget.NewSimpleRenderer(l.scroll) }
 
 // NewLogView keeps at most maxLines lines.
 func NewLogView(maxLines int) *LogView { return newLogView(maxLines) }
@@ -198,12 +230,18 @@ func (l *LogView) Clear() { l.clear() }
 
 // ProgressPanel shows a phase label, a bar and "done / total".
 type ProgressPanel struct {
-	fyne.CanvasObject
+	widget.BaseWidget
 	// unexported
-	phase  *widget.Label
-	bar    *widget.ProgressBar
-	inf    *widget.ProgressBarInfinite
-	counts *widget.Label
+	phase   *widget.Label
+	bar     *widget.ProgressBar
+	inf     *widget.ProgressBarInfinite
+	counts  *widget.Label
+	content fyne.CanvasObject
+}
+
+// CreateRenderer implements fyne.Widget.
+func (p *ProgressPanel) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(p.content)
 }
 
 func NewProgressPanel() *ProgressPanel               { return newProgressPanel() }

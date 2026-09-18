@@ -70,7 +70,8 @@ func newPackTable() *PackTable {
 
 	t.table = table
 	t.total = total
-	t.CanvasObject = container.NewBorder(nil, container.NewPadded(total), nil, nil, table)
+	t.content = container.NewBorder(nil, container.NewPadded(total), nil, nil, table)
+	t.ExtendBaseWidget(t)
 	return t
 }
 
@@ -79,6 +80,7 @@ func (t *PackTable) setPack(p *facepack.Pack) {
 	if p == nil {
 		t.total.SetText("")
 		t.table.Refresh()
+		t.Refresh()
 		return
 	}
 
@@ -114,4 +116,5 @@ func (t *PackTable) setPack(p *facepack.Pack) {
 
 	t.total.SetText(T("widgets.packtable.total", p.TotalImages))
 	t.table.Refresh()
+	t.Refresh()
 }

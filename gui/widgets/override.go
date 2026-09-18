@@ -28,7 +28,8 @@ func newOverrideEditor(cfg OverrideEditorConfig) *OverrideEditor {
 	toolbar := container.NewHBox(addBtn, importBtn, exportBtn)
 
 	scroll := container.NewVScroll(e.list)
-	e.CanvasObject = container.NewBorder(toolbar, nil, nil, nil, scroll)
+	e.content = container.NewBorder(toolbar, nil, nil, nil, scroll)
+	e.ExtendBaseWidget(e)
 	e.refresh()
 	return e
 }
@@ -79,6 +80,9 @@ func (e *OverrideEditor) refresh() {
 
 	e.list.Objects = objects
 	e.list.Refresh()
+	// e.Refresh() (the exported method) re-enters refresh(); call the
+	// embedded BaseWidget's Refresh directly to repaint without recursing.
+	e.BaseWidget.Refresh()
 }
 
 func (e *OverrideEditor) deleteOverride(code string) {

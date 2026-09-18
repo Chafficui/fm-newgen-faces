@@ -15,13 +15,15 @@ func newProgressPanel() *ProgressPanel {
 	}
 	p.inf.Hide()
 
-	p.CanvasObject = container.NewVBox(p.phase, container.NewStack(p.bar, p.inf), p.counts)
+	p.content = container.NewVBox(p.phase, container.NewStack(p.bar, p.inf), p.counts)
+	p.ExtendBaseWidget(p)
 	return p
 }
 
 func (p *ProgressPanel) setPhase(text string) {
 	fyne.Do(func() {
 		p.phase.SetText(text)
+		p.Refresh()
 	})
 }
 
@@ -33,6 +35,7 @@ func (p *ProgressPanel) setProgress(done, total int) {
 		}
 		p.bar.SetValue(ratio)
 		p.counts.SetText(T("widgets.progress.counts", done, total))
+		p.Refresh()
 	})
 }
 
@@ -47,6 +50,7 @@ func (p *ProgressPanel) setIndeterminate(on bool) {
 			p.inf.Hide()
 			p.bar.Show()
 		}
+		p.Refresh()
 	})
 }
 
@@ -58,5 +62,6 @@ func (p *ProgressPanel) reset() {
 		p.bar.SetValue(0)
 		p.phase.SetText("")
 		p.counts.SetText("")
+		p.Refresh()
 	})
 }

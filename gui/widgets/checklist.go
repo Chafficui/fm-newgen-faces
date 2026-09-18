@@ -7,10 +7,25 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// checklistMinHeight reserves enough room for the 5 fixed checklist rows
+// (pack, config, rtf, version, install) up front. Without this, the
+// checklist starts life empty with ~0 height; when SetRows later fills it
+// in, nothing tells the enclosing VBox (built once, before data loads) to
+// redo its layout, so the siblings below it (the path rows, version
+// select…) stay at their stale positions and the rows painted here overlap
+// them. Wrapping in a scroll with a fixed minimum size keeps the
+// checklist's footprint constant from the very first layout pass, so nothing
+// needs to be re-laid-out later; any overflow (more rows than fit) simply
+// scrolls instead of overlapping.
+const checklistMinHeight = 420
+
 func newChecklist() *Checklist {
 	box := container.NewVBox()
-	c := &Checklist{box: box}
-	c.CanvasObject = box
+	scroll := container.NewVScroll(box)
+	scroll.SetMinSize(fyne.NewSize(0, checklistMinHeight))
+
+	c := &Checklist{box: box, content: scroll}
+	c.ExtendBaseWidget(c)
 	return c
 }
 
@@ -56,6 +71,7 @@ func (c *Checklist) setRows(rows []ChecklistRow) {
 	}
 	c.box.Objects = objects
 	c.box.Refresh()
+	c.Refresh()
 }
 
 func (c *Checklist) allOK() bool {

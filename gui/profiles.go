@@ -45,10 +45,6 @@ func (a *App) selectProfile(slug string) {
 	}
 	a.applyProfile(p)
 
-	a.loading = true
-	a.profileSelect.SetSelected(p.Name)
-	a.loading = false
-
 	a.updateState(func(s *profile.State) { s.LastProfile = p.Slug })
 	a.rearmWatcher()
 	a.evaluate()
@@ -61,6 +57,10 @@ func (a *App) applyProfile(p *profile.Profile) {
 
 	a.current = p
 	a.setInputs(nil)
+
+	if a.profileSelect != nil {
+		a.profileSelect.SetSelected(p.Name)
+	}
 
 	a.packRow.SetText(p.Settings.PackDir)
 	a.configRow.SetText(p.Settings.ConfigXML)

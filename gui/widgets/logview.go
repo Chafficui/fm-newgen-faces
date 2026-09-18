@@ -14,7 +14,7 @@ func newLogView(maxLines int) *LogView {
 	scroll := container.NewVScroll(rich)
 
 	l := &LogView{rich: rich, scroll: scroll, maxLines: maxLines}
-	l.CanvasObject = scroll
+	l.ExtendBaseWidget(l)
 	return l
 }
 
@@ -49,6 +49,7 @@ func (l *LogView) appendLine(level LogLevel, line string) {
 		if sc, ok := l.scroll.(*container.Scroll); ok {
 			sc.ScrollToBottom()
 		}
+		l.Refresh()
 	})
 }
 
@@ -60,5 +61,6 @@ func (l *LogView) clear() {
 		l.rich.Segments = nil
 		l.lines = 0
 		l.rich.Refresh()
+		l.Refresh()
 	})
 }

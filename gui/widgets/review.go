@@ -15,16 +15,25 @@ import (
 
 const thumbSize = 48
 
-// reviewRow is a recycled list row; it embeds *fyne.Container so it
-// satisfies fyne.CanvasObject while keeping direct handles to its children
-// for fast updates.
+// reviewRow is a recycled list row. It must be a real widget (not just a
+// *fyne.Container wrapper) because the driver's paint walk only descends
+// into *fyne.Container or fyne.Widget values by concrete/interface type;
+// a struct that merely embeds *fyne.Container (rather than being one) is
+// neither, so its children would never be painted even though widget.List
+// places it directly as a row.
 type reviewRow struct {
-	*fyne.Container
-	thumb  *canvas.Image
-	name   *widget.Label
-	detail *widget.Label
-	reroll *widget.Button
-	path   string // the image path currently loading/loaded into thumb
+	widget.BaseWidget
+	content *fyne.Container
+	thumb   *canvas.Image
+	name    *widget.Label
+	detail  *widget.Label
+	reroll  *widget.Button
+	path    string // the image path currently loading/loaded into thumb
+}
+
+// CreateRenderer implements fyne.Widget.
+func (r *reviewRow) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(r.content)
 }
 
 func newReviewTable(cfg ReviewConfig) *ReviewTable {
@@ -40,7 +49,8 @@ func newReviewTable(cfg ReviewConfig) *ReviewTable {
 		func(id widget.ListItemID, o fyne.CanvasObject) { t.updateRow(id, o) },
 	)
 
-	t.CanvasObject = container.NewBorder(t.search, nil, nil, nil, t.list)
+	t.content = container.NewBorder(t.search, nil, nil, nil, t.list)
+	t.ExtendBaseWidget(t)
 	return t
 }
 
@@ -57,7 +67,9 @@ func (t *ReviewTable) newRowWidget() *reviewRow {
 	reroll := widget.NewButton(T("widgets.review.reroll"), nil)
 
 	c := container.NewBorder(nil, nil, thumb, reroll, text)
-	return &reviewRow{Container: c, thumb: thumb, name: name, detail: detail, reroll: reroll}
+	row := &reviewRow{content: c, thumb: thumb, name: name, detail: detail, reroll: reroll}
+	row.ExtendBaseWidget(row)
+	return row
 }
 
 func (t *ReviewTable) updateRow(id widget.ListItemID, o fyne.CanvasObject) {
@@ -74,13 +86,16 @@ func (t *ReviewTable) updateRow(id widget.ListItemID, o fyne.CanvasObject) {
 	}
 	row.detail.SetText(T("widgets.review.detail", a.Player.ID, nations, string(a.Player.Ethnic), a.Image))
 
+	t.renderMu.Lock()
 	row.thumb.Resource = theme.AccountIcon()
 	row.thumb.Image = nil
 	row.thumb.Refresh()
+	t.renderMu.Unlock()
 	t.loadThumb(a, row)
 
 	row.reroll.Enable()
 	row.reroll.OnTapped = func() { t.doReroll(a, row) }
+	row.Refresh()
 }
 
 // loadThumb resolves a's thumbnail off the UI thread and applies it (via
@@ -99,9 +114,12 @@ func (t *ReviewTable) loadThumb(a assign.Assignment, row *reviewRow) {
 	cached, ok := t.thumbs[path]
 	t.thumbMu.Unlock()
 	if ok {
+		t.renderMu.Lock()
 		row.thumb.Resource = cached
 		row.thumb.Image = nil
 		row.thumb.Refresh()
+		t.renderMu.Unlock()
+		row.Refresh()
 		return
 	}
 
@@ -117,9 +135,12 @@ func (t *ReviewTable) loadThumb(a assign.Assignment, row *reviewRow) {
 			if row.path != path {
 				return // recycled to a different row while loading
 			}
+			t.renderMu.Lock()
 			row.thumb.Resource = res
 			row.thumb.Image = nil
 			row.thumb.Refresh()
+			t.renderMu.Unlock()
+			row.Refresh()
 		})
 	}()
 }
@@ -157,6 +178,7 @@ func (t *ReviewTable) replaceAssignment(playerID string, newA assign.Assignment)
 		}
 	}
 	t.list.Refresh()
+	t.Refresh()
 }
 
 func (t *ReviewTable) setAssignments(rows []assign.Assignment) {
@@ -174,6 +196,7 @@ func (t *ReviewTable) applyFilter() {
 	}
 	t.visible = visible
 	t.list.Refresh()
+	t.Refresh()
 }
 
 func matchesReviewQuery(a assign.Assignment, q string) bool {

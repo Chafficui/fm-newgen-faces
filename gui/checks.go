@@ -133,7 +133,7 @@ func (a *App) checkPack(settings profile.Settings) (*facepack.Pack, widgets.Chec
 		row.Detail = i18n.T("gui.checklist.pack_warn", joinDetails(missingNames(missing), warns))
 	default:
 		row.Status = widgets.StatusOK
-		row.Detail = i18n.T("gui.checklist.pack_ok", len(ethnic.All), pack.TotalImages)
+		row.Detail = i18n.T("gui.checklist.pack_ok", len(ethnic.All)-len(pack.Missing()), len(ethnic.All), pack.TotalImages)
 	}
 	return pack, row
 }
