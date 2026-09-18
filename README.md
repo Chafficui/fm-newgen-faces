@@ -22,14 +22,15 @@ Football Manager generates "newgens" (regens) with blank faces. FM NewGen Faces 
 
 ## Quick start
 
-1. **Install a face pack.** Extract it anywhere under your FM graphics folder, e.g.
+1. **Download and open the app.** Windows: unzip and double-click `fm-newgen-faces.exe`. macOS: unzip, move `FM NewGen Faces.app` to Applications, right-click → Open the first time (the app is not notarized). Linux: extract and run `./install.sh` for an app-menu entry, or start `./fm-newgen-faces` directly.
+2. **Install a face pack.** Extract it anywhere under your FM graphics folder, e.g.
    `Documents/Sports Interactive/Football Manager 2024/graphics/newgen-faces/`.
    The folder must contain the 14 ethnic subfolders (`African`, `Asian`, `Caucasian`, …).
-2. **Start FM NewGen Faces.** It finds your FM installations, installs the required view and filter into FM, and creates a profile per installation. The setup checklist tells you exactly what is still missing.
-3. **Export the newgen list from FM** (once per run):
+3. **Start FM NewGen Faces.** It finds your FM installations, installs the required view and filter into FM, and creates a profile per installation. The setup checklist tells you exactly what is still missing.
+4. **Export the newgen list from FM** (once per run):
    Scouting → Players in Range → import the view **SCRIPT FACES player search** → apply the filter **is newgen search filter** → select all (Ctrl+A) → print to text file (Ctrl+P) → save as `newgen.rtf` in your face pack folder. The app notices the new file by itself.
-4. **Click Preview**, check the numbers, then **Assign faces**. A backup of the previous `config.xml` is kept; *Undo* restores it.
-5. **In FM:** Preferences → Interface → *Clear Cache* and *Reload Skin* (or restart FM). Done.
+5. **Click Preview**, check the numbers, then **Assign faces**. A backup of the previous `config.xml` is kept; *Undo* restores it.
+6. **In FM:** Preferences → Interface → *Clear Cache* and *Reload Skin* (or restart FM). Done.
 
 ## Features
 

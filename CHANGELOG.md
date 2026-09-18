@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.2 – 2026-09-18
+
+### Changed
+- macOS: the download is now a proper `FM NewGen Faces.app` bundle (zip) with icon and bundle ID, so it opens like any Mac app after the one-time right-click → Open.
+- Linux: the tarball includes a desktop entry, the icon and an `install.sh` that puts the app into your user's app menu (no root needed).
+
 ## 2.0.1 – 2026-09-18
 
 ### Fixed

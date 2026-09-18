@@ -93,13 +93,13 @@
     <p>Extract the zip and double-click <code>fm-newgen-faces.exe</code> (the zip also contains <code>fm-newgen-faces-cli.exe</code>, the same tool for the <a href="cli.html">command line</a>). Because the app isn't code-signed with a paid certificate, Windows SmartScreen may show "Windows protected your PC" the first time. Click <strong>More info</strong>, then <strong>Run anyway</strong>. This only appears once per download.</p>
 
     <h3 id="install-macos">macOS</h3>
-    <p>Extract the <code>.tar.gz</code>; inside is a single executable, <code>fm-newgen-faces</code>, which you can keep anywhere (e.g. a folder in Applications). It is not notarized by Apple, so the first double-click is blocked with "cannot be opened because the developer cannot be verified". <strong>Right-click (or Control-click) <code>fm-newgen-faces</code> → Open</strong>, then confirm <strong>Open</strong> in the dialog. After that it opens normally. Alternatively, in Terminal: <code>xattr -d com.apple.quarantine fm-newgen-faces</code>.</p>
+    <p>Unzip the download and drag <code>FM NewGen Faces.app</code> into your Applications folder (or anywhere you like). The app is not notarized by Apple, so the first launch is blocked with "cannot be opened because the developer cannot be verified". <strong>Right-click (or Control-click) the app → Open</strong>, then confirm <strong>Open</strong> in the dialog. After that it opens normally. Alternatively, in Terminal: <code>xattr -dr com.apple.quarantine "/Applications/FM NewGen Faces.app"</code>. The command line lives inside the bundle at <code>FM NewGen Faces.app/Contents/MacOS/fm-newgen-faces</code>.</p>
 
     <h3 id="install-linux">Linux</h3>
-    <p>Extract the <code>.tar.gz</code>, then make the binary executable and run it:</p>
+    <p>Extract the <code>.tar.gz</code>. You can run the binary straight from the folder, or run the included installer to get an entry in your app menu (it copies the app, its icon and a desktop entry into your home directory – no root needed; <code>./install.sh --uninstall</code> removes them again):</p>
     <pre><code>tar xzf fm-newgen-faces-linux.tar.gz
-chmod +x fm-newgen-faces
-./fm-newgen-faces</code></pre>
+cd fm-newgen-faces-linux-*
+./install.sh        # or simply: ./fm-newgen-faces</code></pre>
     <p>The GUI is built with <a href="https://fyne.io/" rel="noopener">Fyne</a> and needs a working OpenGL/X11 (or Wayland via XWayland) stack – the same graphics libraries most desktop Linux systems already have for any GTK/Qt app (X11, GL, and friends). If the window fails to open, install your distribution's equivalents of <code>libgl1</code>, <code>libx11-6</code>, <code>libxcursor1</code>, <code>libxrandr2</code>, <code>libxinerama1</code>, <code>libxi6</code> and <code>libxxf86vm1</code>. The <a href="cli.html">command line</a> works everywhere without a display.</p>
   </section>
 

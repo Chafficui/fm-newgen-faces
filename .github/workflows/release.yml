@@ -53,7 +53,7 @@ jobs:
             archive: zip
           - os: macos-latest
             goos: darwin
-            archive: tar.gz
+            archive: zip
     runs-on: ${{ matrix.os }}
     steps:
       - name: Version
@@ -94,23 +94,39 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          NAME=fm-newgen-faces-${{ matrix.goos }}-${{ steps.v.outputs.version }}
-          mkdir -p dist/$NAME
-          cp README.md LICENSE dist/$NAME/
+          V=${{ steps.v.outputs.version }}
+          mkdir -p dist
           # Versioned archive plus an unversioned copy, so the website can
           # link to releases/latest/download/fm-newgen-faces-<os>.<ext>.
-          if [ "${{ matrix.goos }}" = "windows" ]; then
-            cp fm-newgen-faces.exe fm-newgen-faces-cli.exe dist/$NAME/
-            (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null && cp $NAME.zip fm-newgen-faces-windows.zip)
-          else
-            cp fm-newgen-faces dist/$NAME/
-            (cd dist && tar -czf $NAME.tar.gz $NAME && cp $NAME.tar.gz fm-newgen-faces-${{ matrix.goos }}.tar.gz)
-          fi
+          case "${{ matrix.goos }}" in
+            windows)
+              NAME=fm-newgen-faces-windows-$V
+              mkdir -p dist/$NAME
+              cp fm-newgen-faces.exe fm-newgen-faces-cli.exe README.md LICENSE dist/$NAME/
+              (cd dist && 7z a -tzip $NAME.zip $NAME >/dev/null && cp $NAME.zip fm-newgen-faces-windows.zip)
+              ;;
+            darwin)
+              # A real .app bundle (icon, bundle id, Info.plist) around the binary built above.
+              go install fyne.io/tools/cmd/fyne@v1.7.2
+              "$(go env GOPATH)/bin/fyne" package -os darwin -exe fm-newgen-faces -name "FM NewGen Faces" \
+                -icon assets/icon.png -app-id io.github.chafficui.fmnewgenfaces -app-version "$V" -release
+              ls -d *.app
+              NAME=fm-newgen-faces-macos-$V
+              ditto -c -k --keepParent "FM NewGen Faces.app" dist/$NAME.zip
+              cp dist/$NAME.zip dist/fm-newgen-faces-macos.zip
+              ;;
+            linux)
+              NAME=fm-newgen-faces-linux-$V
+              mkdir -p dist/$NAME
+              cp fm-newgen-faces README.md LICENSE packaging/linux/fm-newgen-faces.desktop packaging/linux/install.sh dist/$NAME/
+              cp assets/icon.png dist/$NAME/fm-newgen-faces.png
+              (cd dist && tar -czf $NAME.tar.gz $NAME && cp $NAME.tar.gz fm-newgen-faces-linux.tar.gz)
+              ;;
+          esac
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.v.outputs.tag }}
           name: FM NewGen Faces ${{ steps.v.outputs.version }}
           files: |
-            dist/*-${{ steps.v.outputs.version }}.${{ matrix.archive }}
-            dist/fm-newgen-faces-${{ matrix.goos }}.${{ matrix.archive }}
+            dist/fm-newgen-faces-*.${{ matrix.archive }}
           generate_release_notes: true

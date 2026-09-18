@@ -1,0 +1,9 @@
+# Metadata used by `fyne package` (macOS .app bundle, Linux desktop entry).
+Website = "https://chafficui.github.io/fm-newgen-faces/"
+
+[Details]
+Icon = "assets/icon.png"
+Name = "FM NewGen Faces"
+ID = "io.github.chafficui.fmnewgenfaces"
+Version = "2.0.2"
+Build = 1

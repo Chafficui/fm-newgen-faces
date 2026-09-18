@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=FM NewGen Faces
+Comment=Give every Football Manager newgen a real face
+Exec=fm-newgen-faces
+Icon=fm-newgen-faces
+Terminal=false
+Categories=Game;Utility;
+Keywords=Football Manager;FM;newgen;regen;faces;

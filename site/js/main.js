@@ -2,7 +2,7 @@
 // The site works fully without this: it only (a) highlights/reorders the
 // download button matching the visitor's OS, and (b) tries to show the
 // exact latest version number and fix up an asset link if the plain
-// "-windows.zip"/"-darwin.tar.gz"/"-linux.tar.gz" name isn't published yet.
+// "-windows.zip"/"-macos.zip"/"-linux.tar.gz" name isn't published yet.
 (function () {
   "use strict";
 
@@ -64,7 +64,7 @@
             os === "windows"
               ? /windows.*\.zip$/i
               : os === "macos"
-              ? /darwin.*\.(tar\.gz|zip)$/i
+              ? /(macos|darwin).*\.(zip|tar\.gz)$/i
               : /linux.*\.tar\.gz$/i;
           var match = assets.find(function (a) {
             return re.test(a.name);
